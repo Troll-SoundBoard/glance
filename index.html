@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glance – answers from your screen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://js.puter.com/v2/"></script>
+<style>
+:root{
+  --bg:#edf0f3;--surface:#fff;--ink:#17212b;--muted:#5d6b79;--line:#d8dee5;
+  --accent:#0a766f;--accent-ink:#fff;--accent-soft:#dff1ef;--user:#17212b;--user-ink:#fff;
+  --warn:#b4540a;--ok:#13805a;--radius:10px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f151b;--surface:#18212a;--ink:#e8edf2;--muted:#93a1af;--line:#2a3643;
+    --accent:#3cc3b8;--accent-ink:#06211f;--accent-soft:#16342f;--user:#2a3a49;--user-ink:#e8edf2;
+    --warn:#f0a35c;--ok:#4cd6a0;color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px;letter-spacing:-.01em}
+.brand svg{width:26px;height:26px;color:var(--accent)}
+.brand small{font-weight:400;color:var(--muted);font-size:14px;margin-left:6px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--line);border-radius:999px;font-size:13px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.pill.on{color:var(--ok);border-color:currentColor}.pill.on .dot{background:var(--ok)}
+main{flex:1;min-height:0;display:grid;grid-template-columns:340px 1fr;gap:20px;padding:20px 24px;max-width:1200px;width:100%;margin:0 auto}
+aside{display:flex;flex-direction:column;gap:14px;overflow:auto}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card h2{margin:0 0 4px;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+.card p{margin:0 0 12px;color:var(--muted);font-size:13.5px}
+.tick{font-size:12.5px;font-weight:500;color:var(--muted)}.tick.ok{color:var(--ok)}
+button,select,input,textarea{font:inherit;color:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:500}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.block{width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+label{display:block;font-size:13px;font-weight:500;margin:12px 0 4px}
+input[type=text],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+textarea{resize:vertical;min-height:60px}
+kbd{font:500 12.5px "IBM Plex Sans",monospace;padding:2px 7px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;background:var(--bg)}
+#keybtn,#keybtn2{font-weight:600;justify-content:flex-start;width:100%}
+#keybtn.rec,#keybtn2.rec{border-color:var(--accent);background:var(--accent-soft)}
+.chat{display:flex;flex-direction:column;min-height:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.chat-head{padding:12px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-weight:600}
+#log{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+.empty{margin:auto;text-align:center;color:var(--muted);max-width:340px}
+.empty strong{display:block;color:var(--ink);font-size:16px;margin-bottom:6px}
+.msg{max-width:min(640px,92%);padding:10px 14px;border-radius:12px;white-space:pre-wrap;word-wrap:break-word}
+.msg.ai{background:var(--bg);border:1px solid var(--line);align-self:flex-start}
+.msg.user{background:var(--user);color:var(--user-ink);align-self:flex-end}
+.msg img{display:block;max-width:100%;width:320px;border-radius:6px;margin-top:2px}
+.msg.err{border-color:var(--warn);color:var(--warn)}
+.typing{display:inline-flex;gap:4px;vertical-align:middle}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:b 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,80%,100%{opacity:.3}40%{opacity:1}}
+.chips{display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 10px}
+.chip{padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;font-size:13px}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.composer{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
+.composer input{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:9}
+#toast.show{opacity:1}
+[hidden]{display:none!important}
+.btn.danger{background:#b3261e;color:#fff;border-color:#b3261e}
+dialog{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--ink);padding:22px;max-width:460px;width:calc(100% - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+dialog h3{margin:0 0 8px;font-size:18px}dialog p{margin:0 0 10px;color:var(--muted)}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:4px}
+.seg button{padding:8px;border:0;background:var(--bg);cursor:pointer;font-weight:500;color:var(--muted)}
+.seg button.active{background:var(--accent);color:var(--accent-ink)}
+.check{display:flex!important;align-items:center;gap:8px;font-weight:400!important}
+.check input{width:auto}
+video{display:none}
+@media (max-width:860px){
+  body{height:auto}main{grid-template-columns:1fr;padding:14px}.chat{min-height:520px}header{padding:12px 14px}.brand small{display:none}
+}
+@media (prefers-reduced-motion:reduce){.typing i{animation:none;opacity:.6}#toast{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10.5" r="2.5"/></svg>
+    Glance<small>Answers from whatever is on your screen</small>
+  </div>
+  <span class="pill" id="status"><span class="dot"></span><span id="statusText">Screen not shared</span></span>
+</header>
+
+<main>
+  <aside>
+    <section class="card">
+      <h2>Share your screen <span class="tick" id="tickScreen">Not shared</span></h2>
+      <p>Choose a window, tab, or your whole screen. Frames are only captured when you press the hotkey.</p>
+      <div class="row">
+        <button class="btn primary" id="shareBtn">Share screen</button>
+        <button class="btn" id="stopBtn" disabled>Stop</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Notifications <span class="tick" id="tickNotif">Off</span></h2>
+      <p>Get each answer as a desktop notification. Click it to open the full chat.</p>
+      <div class="row"><button class="btn" id="notifBtn">Allow notifications</button><button class="btn" id="testBtn">Send test</button></div>
+      <p id="notifHelp" style="margin:10px 0 0"></p>
+    </section>
+
+    <section class="card">
+      <h2>Settings</h2>
+      <label for="keybtn">Hotkey (click, then press a new combination)</label>
+      <button class="btn" id="keybtn"></button>
+      <label for="keybtn2">Close mini window hotkey</label>
+      <button class="btn" id="keybtn2"></button>
+      <label>AI source</label>
+      <div class="seg" role="group" aria-label="AI source">
+        <button type="button" id="modePuter">Puter (free)</button>
+        <button type="button" id="modeKey">My API key</button>
+      </div>
+      <p id="modeNote" style="margin:8px 0 0"></p>
+      <div id="keyFields" hidden>
+        <label for="provider">Provider</label>
+        <select id="provider"></select>
+        <div id="baseWrap" hidden>
+          <label for="base">Base URL (OpenAI-compatible)</label>
+          <input type="text" id="base" placeholder="https://your-host/v1" spellcheck="false">
+        </div>
+        <label for="apikey">API key</label>
+        <input type="password" id="apikey" autocomplete="off" spellcheck="false" placeholder="Paste your key">
+        <label class="check"><input type="checkbox" id="remember"> Remember key on this device</label>
+      </div>
+      <label for="model">Model</label>
+      <input type="text" id="model" spellcheck="false" placeholder="Model name">
+      <label for="style">Answer style</label>
+      <textarea id="style"></textarea>
+      <label class="check" style="margin-top:10px"><input type="checkbox" id="deep"> Double-check answers (slower, more accurate)</label>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="captureBtn" disabled>Capture now</button>
+        <button class="btn" id="pipBtn" title="Opens a small always-on-top window with a capture button">Mini window</button>
+      </div>
+    </section>
+  </aside>
+
+  <section class="chat" aria-label="Conversation">
+    <div class="chat-head">Conversation <button class="btn danger" id="forgetBtn" style="padding:4px 10px;font-size:13px">Forget everything</button></div>
+    <div id="log" aria-live="polite">
+      <div class="empty" id="empty"><strong>Nothing captured yet</strong>Share your screen, then press <kbd class="hk"></kbd> while this page or the mini window is focused.</div>
+    </div>
+    <div class="chips">
+      <button class="chip" data-p="Make it only 15 words.">Make it 15 words</button>
+      <button class="chip" data-p="Explain it more simply.">Explain simpler</button>
+      <button class="chip" data-p="Give me more detail.">More detail</button>
+      <button class="chip" data-p="Give me a one-sentence version.">One sentence</button>
+    </div>
+    <form class="composer" id="form">
+      <input type="text" id="input" placeholder="Message Glance…" autocomplete="off" aria-label="Message">
+      <button class="btn primary" id="sendBtn" type="submit">Send</button>
+    </form>
+  </section>
+</main>
+
+<dialog id="forgetDlg" aria-labelledby="fdTitle">
+  <h3 id="fdTitle">Forget everything?</h3>
+  <p><strong>This permanently deletes your whole conversation with Glance.</strong> Every message and answer disappears from the chat and the mini window, and Glance will no longer remember anything you discussed or captured. This cannot be undone.</p>
+  <p>Your hotkeys, provider, model and API key are kept unless you tick the box below.</p>
+  <label class="check" style="margin:12px 0 18px"><input type="checkbox" id="alsoSettings"> Also reset my settings and delete my saved API key</label>
+  <div class="row" style="justify-content:flex-end"><button class="btn" id="forgetNo">Cancel</button><button class="btn danger" id="forgetYes">Forget everything</button></div>
+</dialog>
+<video id="video" muted playsinline></video>
+<div id="toast" role="status"></div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const P={
+  openai:{n:'OpenAI',b:'https://api.openai.com/v1',m:'gpt-4o-mini'},
+  gemini:{n:'Google AI Studio (Gemini)',b:'https://generativelanguage.googleapis.com/v1beta/openai',m:'gemini-2.5-flash'},
+  openrouter:{n:'OpenRouter',b:'https://openrouter.ai/api/v1',m:'openai/gpt-4o-mini'},
+  groq:{n:'Groq',b:'https://api.groq.com/openai/v1',m:'meta-llama/llama-4-scout-17b-16e-instruct'},
+  anthropic:{n:'Anthropic (Claude)',m:'claude-haiku-5-5'},
+  mistral:{n:'Mistral',b:'https://api.mistral.ai/v1',m:'pixtral-12b-2409'},
+  xai:{n:'xAI (Grok)',b:'https://api.x.ai/v1',m:'grok-2-vision-1212'},
+  together:{n:'Together AI',b:'https://api.together.xyz/v1',m:'meta-llama/Llama-4-Scout-17B-16E-Instruct'},
+  deepseek:{n:'DeepSeek (no image input)',b:'https://api.deepseek.com/v1',m:'deepseek-chat'},
+  custom:{n:'Custom (any OpenAI-compatible URL)',b:'',m:''}
+};
+const S={hotkey:store.get('hk','Ctrl+I'),style:store.get('style','Be concise and accurate. If the screen shows a question, answer it directly.'),
+  mode:store.get('mode','puter'),provider:store.get('prov','openai'),models:store.get('models',{}),base:store.get('base',''),key:store.get('key',''),remember:store.get('rem',false)};
+if(!P[S.provider])S.provider='openai';
+const modelKey=()=>S.mode==='puter'?'puter':S.provider;
+const model=()=>S.models[modelKey()]||(S.mode==='puter'?'gpt-4o-mini':P[S.provider].m);
+function saveKey(){store.set('rem',S.remember);if(S.remember)store.set('key',S.key);else try{localStorage.removeItem('key')}catch(e){}}
+function errText(e){
+  let m=e&&e.message||'unknown error';
+  if(S.mode==='puter')return 'Something went wrong: '+m+'. If a Puter sign-in window was blocked, allow pop-ups and try again.';
+  if(m==='Failed to fetch')m='the request was blocked or could not connect. Check the key, base URL, and network; some providers do not allow browser requests';
+  return 'Something went wrong: '+m;
+}
+async function ask(msgs,img){
+  if(S.mode==='puter'){
+    if(typeof puter==='undefined')throw new Error('Puter.js failed to load');
+    const o={model:model()};
+    if(img){const mid=msgs.slice(1,-1).map(x=>(x.role==='user'?'User: ':'Glance: ')+x.content).join('\n');return textOf(await puter.ai.chat(msgs[0].content+(mid?'\n\nConversation so far:\n'+mid:'')+'\n\n'+msgs[msgs.length-1].content,img,false,o))}
+    return textOf(await puter.ai.chat(msgs,false,o));
+  }
+  const m=model(),sys=msgs[0].content,rest=msgs.slice(1);
+  if(!m)throw new Error('Enter a model name in Settings');
+  if(!S.key&&S.provider!=='custom')throw new Error('Add your API key in Settings');
+  const last=i=>img&&i===rest.length-1;
+  if(S.provider==='anthropic'){
+    const ms=rest.map((x,i)=>({role:x.role,content:last(i)?[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:img.split(',')[1]}},{type:'text',text:x.content}]:x.content}));
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:m,max_tokens:1024,system:sys,messages:ms})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(j.error&&j.error.message||'HTTP '+r.status);
+    return j.content.map(p=>p.text||'').join('');
+  }
+  const base=(S.provider==='custom'?S.base:P[S.provider].b).replace(/\/+$/,'');
+  if(!base)throw new Error('Enter a base URL in Settings');
+  const ms=[{role:'system',content:sys},...rest.map((x,i)=>({role:x.role,content:last(i)?[{type:'text',text:x.content},{type:'image_url',image_url:{url:img}}]:x.content}))];
+  const h={'content-type':'application/json'};if(S.key)h.authorization='Bearer '+S.key;
+  const r=await fetch(base+'/chat/completions',{method:'POST',headers:h,body:JSON.stringify({model:m,messages:ms})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){const er=j.error;throw new Error(er&&(er.message||(typeof er==='string'?er:''))||'HTTP '+r.status)}
+  const c=j.choices&&j.choices[0]&&j.choices[0].message.content;
+  return Array.isArray(c)?c.map(p=>p.text||'').join(''):String(c||'');
+}
+function renderSettings(){
+  const k=S.mode==='key';
+  [['#modePuter',!k],['#modeKey',k]].forEach(([s,a])=>{$(s).classList.toggle('active',a);$(s).setAttribute('aria-pressed',a)});
+  $('#keyFields').hidden=!k;$('#baseWrap').hidden=!(k&&S.provider==='custom');
+  $('#modeNote').textContent=k?'Requests go straight from your browser to the provider.':'Free through Puter.js. A Puter sign-in popup appears on first use.';
+  $('#provider').value=S.provider;$('#base').value=S.base;$('#apikey').value=S.key;$('#remember').checked=S.remember;$('#model').value=model();
+}
+const SYS='You are Glance, an expert assistant that sees the user’s screen. First work out what the user needs from what is on screen, then do it directly. '+
+'Multiple choice: state the correct option (letter and text), then one short reason. '+
+'Open question (history, science, trivia): answer accurately in a few sentences. '+
+'Math, logic or code: solve it and put the final answer on its own last line. '+
+'Writing or replying (email, chat, form): write the reply, ready to send. '+
+'Foreign text: translate it. Error or bug: give the cause and the fix. '+
+'If there are several questions, answer each one, numbered. '+
+'Otherwise state what matters on screen and the next step. '+
+'Read all visible text carefully, including small print. Ignore browser controls and the Glance app itself. '+
+'No preamble and no mention of screenshots or being an AI. If unsure, say what is uncertain in a few words.';
+const DEEP=' Think carefully and double-check your answer before replying.';
+const CHAT_SYS='You are Glance, a helpful assistant that remembers the whole conversation with the user. Sometimes they capture their screen (shown as [Screen captured] followed by your answer) and sometimes they just talk to you. Answer directly and concisely. When they ask you to change an earlier answer, reply with only the revised answer.';
+const EMPTY='<div class="empty" id="empty"><strong>No messages yet</strong>Type a message below, or share your screen and press <kbd class="hk"></kbd> to ask about it.</div>';
+let beepCtx,lastPip='';
+function saveHist(){let t=0;while(t++<20){try{localStorage.setItem('hist',JSON.stringify(history));return}catch(e){if(history.length<=40)return;history.splice(0,20)}}}
+function ctx(){let n=0,i=history.length;while(i>0&&n+history[i-1].content.length<=60000){n+=history[i-1].content.length;i--}const m=history.slice(i);while(m.length&&m[0].role!=='user')m.shift();return m}
+let stream=null,busy=false,recording=false,history=store.get('hist',[]),pip=null,pendingPip=false,toastT;
+
+const video=$('#video'),log=$('#log');
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3500)}
+function parse(s){const p=s.split('+').map(x=>x.trim().toLowerCase());return{ctrl:p.includes('ctrl'),alt:p.includes('alt'),shift:p.includes('shift'),meta:p.includes('meta'),key:p[p.length-1]}}
+function matches(e,k){const c=parse(k||S.hotkey);return e.ctrlKey===c.ctrl&&e.altKey===c.alt&&e.shiftKey===c.shift&&e.metaKey===c.meta&&e.key.toLowerCase()===c.key}
+
+function ui(){
+  const on=!!stream;
+  $('#status').classList.toggle('on',on);
+  $('#statusText').textContent=on?'Screen shared':'Screen not shared';
+  $('#tickScreen').textContent=on?'Sharing':'Not shared';$('#tickScreen').classList.toggle('ok',on);
+  $('#shareBtn').textContent=on?'Change source':'Share screen';
+  $('#stopBtn').disabled=!on;
+  $('#captureBtn').disabled=!on||busy;
+  $('#sendBtn').disabled=busy;
+  const perm='Notification' in window?Notification.permission:'denied';
+  $('#tickNotif').textContent=perm==='granted'?'On':perm==='denied'?'Blocked':'Off';
+  $('#tickNotif').classList.toggle('ok',perm==='granted');
+  $('#notifBtn').disabled=perm!=='default';
+  [['#keybtn','hotkey',S.hotkey],['#keybtn2','closekey',S.closeKey]].forEach(([id,n,v])=>{$(id).textContent=recording===n?'Press keys… (Esc to cancel)':v;$(id).classList.toggle('rec',recording===n)});
+  document.querySelectorAll('.hk').forEach(k=>k.textContent=S.hotkey);
+  $('#notifHelp').textContent=notifHelp();
+}
+
+/* ---------- screen sharing ---------- */
+async function share(){
+  try{
+    const s=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:5},audio:false});
+    if(stream)stream.getTracks().forEach(t=>t.stop());
+    stream=s;video.srcObject=s;await video.play();
+    s.getVideoTracks()[0].addEventListener('ended',()=>{if(stream===s){stream=null;ui();toast('Screen sharing stopped.')}});
+    ui();toast('Screen shared. Press '+S.hotkey+' to ask.');
+  }catch(e){toast('Screen sharing was cancelled or blocked by the browser.');return}
+  if('documentPictureInPicture' in window&&!(pip&&!pip.closed)){
+    try{await openPip()}catch(e){pendingPip=true;toast('Click anywhere on this page to open the mini window.')}
+  }
+}
+function stop(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;ui()}
+function frame(){
+  const w=video.videoWidth,h=video.videoHeight,k=Math.min(1,1920/w),c=document.createElement('canvas');
+  c.width=Math.round(w*k);c.height=Math.round(h*k);
+  c.getContext('2d').drawImage(video,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',.82);
+}
+
+/* ---------- chat ---------- */
+function add(role,text,img,typing){
+  $('#empty')&&$('#empty').remove();
+  const d=document.createElement('div');d.className='msg '+role;
+  if(typing)d.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';
+  else if(text)d.textContent=text;
+  if(img){const i=new Image();i.src=img;i.alt='Captured screenshot';d.appendChild(i)}
+  log.appendChild(d);while(log.children.length>300)log.firstChild.remove();log.scrollTop=log.scrollHeight;return d;
+}
+function textOf(r){
+  if(typeof r==='string')return r;
+  if(r&&r.success===false)throw new Error((r.error&&r.error.message)||r.error||'The AI request failed.');
+  const c=r&&r.message&&r.message.content;
+  if(typeof c==='string')return c;
+  if(Array.isArray(c))return c.map(p=>p.text||'').join('');
+  return String(r);
+}
+function setMsg(el,text,err){el.textContent=text;el.classList.toggle('err',!!err);log.scrollTop=log.scrollHeight}
+function beep(){try{beepCtx=beepCtx||new (window.AudioContext||window.webkitAudioContext)();beepCtx.resume();const o=beepCtx.createOscillator(),g=beepCtx.createGain(),n=beepCtx.currentTime;o.connect(g);g.connect(beepCtx.destination);o.frequency.value=880;g.gain.setValueAtTime(.12,n);g.gain.exponentialRampToValueAtTime(.001,n+.25);o.start();o.stop(n+.25)}catch(e){}}
+function pipShow(t){lastPip=t;if(pip&&!pip.closed){const a=pip.document.getElementById('ans');if(a)a.textContent=t}}
+function notifHelp(){
+  if(!('Notification' in window))return 'This browser does not support notifications.';
+  if(location.protocol==='file:')return 'Notifications are unreliable for files opened from disk. Host this file (GitHub Pages or Netlify Drop) or serve it from localhost, then allow notifications there.';
+  const p=Notification.permission;
+  if(p==='denied')return 'Blocked. Click the icon at the left of the address bar, open Site settings, and set Notifications to Allow.';
+  if(p==='default')return 'Click Allow notifications, then Send test.';
+  return 'If the test does not appear, turn off Do Not Disturb in the ChromeOS clock menu. Answers also show in the Mini window.';
+}
+function notify(t,force){
+  beep();pipShow(t);
+  if(document.hidden||!document.hasFocus())document.title='● New answer – Glance';
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  if(!force&&((pip&&!pip.closed)||(!document.hidden&&document.hasFocus())))return;
+  try{
+    const n=new Notification('Glance',{body:t.length>240?t.slice(0,237)+'…':t,tag:'glance-'+Date.now(),silent:false});
+    n.onclick=()=>{window.focus();n.close()};
+  }catch(e){toast('Notification failed: '+e.message)}
+}
+window.addEventListener('focus',()=>{document.title='Glance – answers from your screen'});
+
+async function capture(){
+  if(busy)return;
+  if(!stream){toast('Share your screen first.');return}
+  if(S.mode==='puter'&&typeof puter==='undefined'){toast('Puter.js failed to load. Check your connection.');return}
+  busy=true;ui();pipShow('Reading your screen…');
+  let img;try{img=frame()}catch(e){busy=false;ui();toast('Could not read the screen.');return}
+  add('user','Screen captured',img);
+  const m=add('ai','',null,true);
+  try{
+    const t=(await ask([{role:'system',content:SYS+(S.deep?DEEP:'')+' You remember the earlier conversation; use it when relevant. '+S.style},...ctx(),{role:'user',content:'Respond to this screenshot.'}],img)).trim();
+    setMsg(m,t);
+    history.push({role:'user',content:'[Screen captured]'},{role:'assistant',content:t});saveHist();
+    notify(t);
+  }catch(e){setMsg(m,errText(e),true);pipShow(errText(e))}
+  busy=false;ui();
+}
+
+async function send(text){
+  text=text.trim();if(!text||busy)return;
+  busy=true;ui();pipShow('Thinking…');add('user',text);history.push({role:'user',content:text});
+  const m=add('ai','',null,true);
+  try{
+    const msgs=[{role:'system',content:CHAT_SYS+' '+S.style},...ctx()];
+    const t=(await ask(msgs)).trim();
+    setMsg(m,t);history.push({role:'assistant',content:t});saveHist();notify(t);
+  }catch(e){history.pop();setMsg(m,errText(e),true);pipShow(errText(e))}
+  busy=false;ui();
+}
+
+/* ---------- mini window (Chrome/Edge) ---------- */
+async function openPip(){
+  pip=await documentPictureInPicture.requestWindow({width:360,height:320});
+  pip.document.head.innerHTML='<style>body{margin:0;display:flex;flex-direction:column;height:100vh;font:14px system-ui;background:#17212b;color:#fff}button{padding:10px 16px;border:0;border-radius:8px;background:#3cc3b8;color:#06211f;font:600 14px system-ui;cursor:pointer}p{margin:6px 0 0;font-size:12px;color:#93a1af}#top{padding:10px 12px 4px;text-align:center}#ans{flex:1;overflow:auto;padding:4px 12px;font-size:13px;line-height:1.4;white-space:pre-wrap}form{display:flex;gap:6px;padding:8px 12px 12px}input{flex:1;min-width:0;padding:8px 10px;border:1px solid #2a3643;border-radius:8px;background:#0f151b;color:#fff;font:14px system-ui}</style>';
+  pip.document.body.innerHTML='<div id="top"><button id="go">Ask about screen</button><p>'+S.hotkey+' to ask · '+S.closeKey+' to close</p></div><div id="ans"></div><form id="f"><input id="t" placeholder="Message Glance…" autocomplete="off"><button>Send</button></form>';
+  pip.document.getElementById('ans').textContent=lastPip;
+  pip.document.getElementById('f').onsubmit=e=>{e.preventDefault();const t=pip.document.getElementById('t'),v=t.value;t.value='';send(v)};
+  pip.document.getElementById('go').onclick=()=>capture();
+  pip.addEventListener('pagehide',()=>{pip=null});
+  pip.addEventListener('keydown',onKey);
+  try{pip.focus()}catch(e){}
+}
+function closePip(){if(pip&&!pip.closed)pip.close();pip=null}
+async function popout(){
+  if(!('documentPictureInPicture' in window)){toast('The mini window needs Chrome or Edge 116 or newer.');return}
+  if(pip&&!pip.closed){try{pip.focus()}catch(e){}return}
+  try{await openPip()}catch(e){toast('Could not open the mini window.')}
+}
+
+/* ---------- hotkeys ---------- */
+function onKey(e){
+  if(recording){
+    e.preventDefault();
+    if(e.key==='Escape'){recording=false;ui();return}
+    if(['Control','Shift','Alt','Meta'].includes(e.key))return;
+    if(!(e.ctrlKey||e.altKey||e.metaKey)){toast('Include Ctrl, Alt, or Cmd in the hotkey.');return}
+    const p=[];if(e.ctrlKey)p.push('Ctrl');if(e.altKey)p.push('Alt');if(e.shiftKey)p.push('Shift');if(e.metaKey)p.push('Meta');
+    p.push(e.key.length===1?e.key.toUpperCase():e.key);
+    const c=p.join('+');if(recording==='hotkey'){S.hotkey=c;store.set('hk',c)}else{S.closeKey=c;store.set('ck',c)}recording=false;ui();toast('Hotkey set to '+c);return;
+  }
+  if(matches(e)){e.preventDefault();capture()}
+  else if(matches(e,S.closeKey)){e.preventDefault();closePip()}
+}
+window.addEventListener('keydown',onKey);
+
+/* ---------- wiring ---------- */
+$('#shareBtn').onclick=share;
+$('#stopBtn').onclick=stop;
+$('#captureBtn').onclick=capture;
+$('#pipBtn').onclick=popout;
+$('#testBtn').onclick=()=>{notify('Test: alerts are working.',true);if(!('Notification' in window)||Notification.permission!=='granted')toast(notifHelp())};
+S.deep=store.get('deep',false);$('#deep').checked=S.deep;
+$('#deep').onchange=e=>{S.deep=e.target.checked;store.set('deep',S.deep)};
+S.closeKey=store.get('ck','Ctrl+Shift+X');
+$('#keybtn').onclick=()=>{recording=recording==='hotkey'?false:'hotkey';ui()};
+$('#keybtn2').onclick=()=>{recording=recording==='closekey'?false:'closekey';ui()};
+['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{if(pendingPip){pendingPip=false;popout()}},true));
+$('#notifBtn').onclick=async()=>{
+  if(!('Notification' in window)){toast('This browser does not support notifications.');return}
+  const p=await Notification.requestPermission();ui();
+  if(p==='granted')toast('Notifications are on.');else toast('Notifications were not allowed.');
+};
+$('#style').value=S.style;
+$('#provider').innerHTML=Object.keys(P).map(k=>'<option value="'+k+'">'+P[k].n+'</option>').join('');
+$('#modePuter').onclick=()=>{S.mode='puter';store.set('mode',S.mode);renderSettings()};
+$('#modeKey').onclick=()=>{S.mode='key';store.set('mode',S.mode);renderSettings()};
+$('#provider').onchange=e=>{S.provider=e.target.value;store.set('prov',S.provider);renderSettings()};
+$('#base').onchange=e=>{S.base=e.target.value.trim();store.set('base',S.base)};
+$('#apikey').oninput=e=>{S.key=e.target.value.trim();saveKey()};
+$('#remember').onchange=e=>{S.remember=e.target.checked;saveKey()};
+$('#model').onchange=e=>{S.models[modelKey()]=e.target.value.trim();store.set('models',S.models);renderSettings()};
+renderSettings();
+$('#style').onchange=e=>{S.style=e.target.value;store.set('style',S.style)};
+$('#form').onsubmit=e=>{e.preventDefault();const i=$('#input');const v=i.value;i.value='';send(v)};
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>send(c.dataset.p));
+$('#forgetBtn').onclick=()=>{$('#alsoSettings').checked=false;$('#forgetDlg').showModal()};
+$('#forgetNo').onclick=()=>$('#forgetDlg').close();
+$('#forgetYes').onclick=()=>{
+  $('#forgetDlg').close();
+  if($('#alsoSettings').checked){try{localStorage.clear()}catch(e){}location.reload();return}
+  history=[];saveHist();pipShow('');log.innerHTML=EMPTY;ui();toast('Glance has forgotten the conversation.');
+};
+if(!Array.isArray(history))history=[];
+log.innerHTML=EMPTY;
+history.forEach(x=>add(x.role==='user'?'user':'ai',x.content==='[Screen captured]'?'Screen captured':x.content));
+{const la=history.slice().reverse().find(x=>x.role==='assistant');if(la)lastPip=la.content}
+ui();
+})();
+</script>
+</body>
+</html>
