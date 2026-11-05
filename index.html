@@ -99,7 +99,23 @@ kbd{font:500 12.5px "IBM Plex Sans",monospace;padding:2px 7px;border:1px solid v
 #liveText{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:13.5px}
 .live .btn{padding:4px 12px;font-size:13px}
 .composer .btn.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:9}
+#vo{position:fixed;inset:0;z-index:20;background:#000;color:#fff;display:flex;align-items:center;justify-content:center}
+#orb{width:min(72vw,300px);height:min(72vw,300px);cursor:pointer;transition:opacity .3s}
+#vo.muted #orb{opacity:.55}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.vbtn{position:absolute;bottom:max(28px,env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;border:0;background:#2a2a2c;color:#fff;display:grid;place-items:center;cursor:pointer}
+.vbtn:hover{background:#3a3a3d}
+.vbtn svg{width:24px;height:24px}
+#vmic{left:max(28px,env(safe-area-inset-left))}#vend{right:max(28px,env(safe-area-inset-right))}
+#vmic.muted{background:#fff;color:#000}
+#vmic .slash{display:none}#vmic.muted .slash{display:block}
+#vgear{position:absolute;top:max(18px,env(safe-area-inset-top));right:20px;width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:#c7c7cc;cursor:pointer;display:grid;place-items:center}
+#vgear:hover{background:#2a2a2c}#vgear svg{width:22px;height:22px}
+#vset{position:absolute;top:70px;right:20px;width:min(290px,calc(100% - 40px));background:#1c1c1e;border:1px solid #38383a;border-radius:14px;padding:14px;font-size:14px;z-index:2}
+#vset label{color:#e5e5ea;margin-top:0}#vset .check{margin-top:12px}
+#vset select{background:#0c0c0d;color:#fff;border-color:#38383a}
+#vset .btn{background:#2a2a2c;color:#fff;border-color:#38383a}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:30}
 #toast.show{opacity:1}
 [hidden]{display:none!important}
 .btn.danger{background:#b3261e;color:#fff;border-color:#b3261e}
@@ -197,11 +213,6 @@ video#video{display:none}
       <button class="chip" data-p="Give me more detail.">More detail</button>
       <button class="chip" data-p="Give me a one-sentence version.">One sentence</button>
     </div>
-    <div class="live" id="live" hidden>
-      <span class="live-dot"></span><b id="liveState">Listening…</b><span id="liveText"></span>
-      <button class="btn" id="liveInterrupt" type="button" hidden>Interrupt</button>
-      <button class="btn danger" id="liveEnd" type="button">End</button>
-    </div>
     <div class="tray" id="tray" hidden></div>
     <form class="composer" id="form">
       <button class="btn icon" id="attachBtn" type="button" title="Attach files: images, PDFs, documents, audio, video, code" aria-label="Attach files">
@@ -216,6 +227,19 @@ video#video{display:none}
     </form>
   </section>
 </main>
+
+<div id="vo" hidden role="dialog" aria-label="Live voice conversation">
+  <button id="vgear" type="button" aria-label="Voice settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
+  <div id="vset" hidden>
+    <label for="vvoice">Voice</label><select id="vvoice"></select>
+    <label class="check"><input type="checkbox" id="vbarge"> Interrupt by speaking (best with headphones)</label>
+    <button class="btn" id="vtest" type="button" style="margin-top:10px">Test voice</button>
+  </div>
+  <canvas id="orb" aria-label="Glance. Tap while it is speaking to interrupt."></canvas>
+  <span id="vstatus" class="sr" aria-live="polite"></span>
+  <button class="vbtn" id="vmic" type="button" aria-label="Mute microphone" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/><line class="slash" x1="4" y1="4" x2="20" y2="20"/></svg></button>
+  <button class="vbtn" id="vend" type="button" aria-label="End conversation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div>
 
 <dialog id="forgetDlg" aria-labelledby="fdTitle">
   <h3 id="fdTitle">Forget everything?</h3>
@@ -633,15 +657,15 @@ async function send(text,noFiles,extraImgs){
   busy=false;ui();
 }
 
-/* ---------- live voice mode ---------- */
+/* ---------- live voice mode (orb) ---------- */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-let liveMode=false,liveState='',rec=null,audio=null,speakToken=0,voiceWarned=false;
+let liveMode=false,liveState='',rec=null,audio=null,speakToken=0,voiceWarned=false,vmuted=false;
+let micStream=null,actx=null,analyser=null,micBuf=null,micLevel=0,orbRaf=0,oscale=.6,oenergy=0,barged=0,lastT=0;
+S.barge=store.get('barge',true);
+const orb=$('#orb'),octx=orb.getContext('2d');
 function setLive(st){
   if(!liveMode)return;liveState=st;
-  const l=$('#live');l.hidden=false;l.className='live '+st;
-  $('#liveState').textContent=st==='listening'?'Listening…':st==='thinking'?'Thinking…':'Speaking…';
-  $('#liveInterrupt').hidden=st!=='speaking';
-  if(st!=='listening')$('#liveText').textContent='';
+  $('#vstatus').textContent=st==='listening'?'Listening':st==='thinking'?'Thinking':st==='speaking'?'Speaking':'Microphone muted';
 }
 function stopListening(){try{rec&&rec.abort()}catch(e){}rec=null}
 function stopSpeaking(){speakToken++;if(audio){try{audio.pause()}catch(e){}audio=null}try{speechSynthesis.cancel()}catch(e){}}
@@ -683,10 +707,11 @@ function liveNext(){if(liveMode)setTimeout(listen,250)}
 function listen(){
   if(!liveMode)return;
   if(busy){setTimeout(listen,500);return}
+  if(vmuted){setLive('muted');return}
   setLive('listening');
   const r=new SR();rec=r;r.lang=navigator.language||'en-US';r.interimResults=true;r.continuous=false;
   let fin='';
-  r.onresult=e=>{let it='';for(let i=e.resultIndex;i<e.results.length;i++){const x=e.results[i];if(x.isFinal)fin+=x[0].transcript;else it+=x[0].transcript}$('#liveText').textContent=fin+it};
+  r.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)fin+=e.results[i][0].transcript}};
   r.onerror=e=>{
     if(e.error==='not-allowed'||e.error==='service-not-allowed'){toast('Microphone blocked. Allow it from the icon in the address bar, then try again.');endLive()}
     else if(e.error==='network'){toast('Speech recognition needs an internet connection.');endLive()}
@@ -700,22 +725,86 @@ function listen(){
 }
 async function handleLive(t){
   rec=null;
-  if(/^(stop|exit|end|quit)( live)?( mode| listening| conversation)?\.?$/i.test(t)){endLive();return}
+  if(/^(stop|exit|end|quit|goodbye)( live)?( mode| listening| conversation)?\.?$/i.test(t)){endLive();return}
   setLive('thinking');
   let extra=[];
   if(stream&&/\b(screen|look at|see this|this page|on my display|what am i looking at)\b/i.test(t)){try{extra=[frame()];toast('Looking at your screen…')}catch(e){}}
   await send(t,true,extra);
 }
-function startLive(){
+function bargeIn(){stopSpeaking();listen()}
+
+/* microphone level (also used for interrupting by voice) */
+async function micOn(){
+  micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:false}});
+  actx=new (window.AudioContext||window.webkitAudioContext)();
+  const src=actx.createMediaStreamSource(micStream);analyser=actx.createAnalyser();analyser.fftSize=1024;src.connect(analyser);
+  micBuf=new Uint8Array(analyser.fftSize);
+}
+function micOff(){if(micStream)micStream.getTracks().forEach(t=>t.stop());micStream=null;try{actx&&actx.close()}catch(e){}actx=null;analyser=null}
+function readMic(){
+  if(!analyser||vmuted)return 0;
+  analyser.getByteTimeDomainData(micBuf);let s=0;
+  for(let i=0;i<micBuf.length;i++){const v=(micBuf[i]-128)/128;s+=v*v}
+  return Math.sqrt(s/micBuf.length);
+}
+
+/* the orb */
+function sizeOrb(){const d=Math.min(window.devicePixelRatio||1,2),r=orb.getBoundingClientRect();orb.width=Math.max(2,Math.round(r.width*d));orb.height=Math.max(2,Math.round(r.height*d))}
+function drawOrb(t){
+  const w=orb.width,h=orb.height,c=octx,cx=w/2,cy=h/2,R=w*.3*oscale,e=oenergy,sp=1+e*2.5;
+  c.clearRect(0,0,w,h);
+  const halo=c.createRadialGradient(cx,cy,R*.8,cx,cy,R*1.7);
+  halo.addColorStop(0,'rgba(90,170,255,'+(.2+e*.35)+')');halo.addColorStop(1,'rgba(90,170,255,0)');
+  c.fillStyle=halo;c.fillRect(0,0,w,h);
+  c.save();c.beginPath();c.arc(cx,cy,R,0,Math.PI*2);c.clip();
+  const g=c.createLinearGradient(cx-R,cy-R,cx+R,cy+R);
+  g.addColorStop(0,'#ffffff');g.addColorStop(.45,'#a9d2ff');g.addColorStop(1,'#2f86ff');
+  c.fillStyle=g;c.fillRect(cx-R,cy-R,R*2,R*2);
+  const blobs=[[.9,0,'255,255,255',.7],[1.3,2,'255,255,255',.6],[1.1,4,'30,120,255',.55],[.7,1,'110,180,255',.6],[1.6,3,'255,255,255',.45]];
+  for(const [s,ph,col,a] of blobs){
+    const ang=t*s*.6*sp+ph,bx=cx+Math.cos(ang)*R*.5,by=cy+Math.sin(ang*1.27)*R*.5,br=R*(.7+.15*Math.sin(t*s+ph));
+    const bg=c.createRadialGradient(bx,by,0,bx,by,br);
+    bg.addColorStop(0,'rgba('+col+','+a+')');bg.addColorStop(1,'rgba('+col+',0)');
+    c.fillStyle=bg;c.fillRect(cx-R,cy-R,R*2,R*2);
+  }
+  c.restore();
+}
+function orbFrame(ts){
+  if(!liveMode){orbRaf=0;return}
+  const t=ts/1000,dt=Math.min(.05,Math.max(.001,t-lastT));lastT=t;
+  micLevel=micLevel*.7+readMic()*.3;
+  let target=0,sc=1;
+  if(liveState==='listening'){target=Math.min(1,micLevel*5);sc=1+target*.22+Math.sin(t*1.6)*.015}
+  else if(liveState==='speaking'){const en=Math.abs(Math.sin(t*7.3)*Math.sin(t*2.1+1)+Math.sin(t*11.7)*.4);target=Math.min(1,.25+en*.6);sc=1.08+target*.2}
+  else if(liveState==='thinking'){target=.2;sc=.92+Math.sin(t*2.4)*.06}
+  else sc=.62;
+  oenergy+=(target-oenergy)*Math.min(1,dt*10);oscale+=(sc-oscale)*Math.min(1,dt*8);
+  if(liveState==='speaking'&&S.barge&&!vmuted&&micLevel>.07){barged+=dt;if(barged>.35){barged=0;bargeIn()}}else barged=0;
+  drawOrb(t);orbRaf=requestAnimationFrame(orbFrame);
+}
+
+async function startLive(){
   if(!SR){toast('Live voice needs Chrome or Edge, which provide speech recognition.');return}
   if(liveMode)return;
-  liveMode=true;$('#liveBtn').classList.add('on');
+  try{await micOn()}catch(e){micOff();toast('Microphone blocked or unavailable. Allow it from the icon in the address bar, then try again.');return}
+  liveMode=true;vmuted=false;
+  $('#vo').hidden=false;$('#vo').classList.remove('muted');$('#vmic').classList.remove('muted');$('#liveBtn').classList.add('on');
+  document.body.style.overflow='hidden';
   try{speechSynthesis.cancel()}catch(e){}
-  listen();
+  sizeOrb();lastT=0;oscale=.6;oenergy=0;micLevel=0;
+  listen();orbRaf=requestAnimationFrame(orbFrame);
 }
 function endLive(){
-  liveMode=false;liveState='';stopListening();stopSpeaking();
-  $('#live').hidden=true;$('#liveBtn').classList.remove('on');
+  liveMode=false;liveState='';stopListening();stopSpeaking();micOff();cancelAnimationFrame(orbRaf);
+  $('#vo').hidden=true;$('#vset').hidden=true;$('#liveBtn').classList.remove('on');document.body.style.overflow='';
+  vmuted=false;$('#vmic').classList.remove('muted');
+}
+function toggleMute(){
+  vmuted=!vmuted;
+  $('#vmic').classList.toggle('muted',vmuted);$('#vmic').setAttribute('aria-pressed',vmuted);$('#vo').classList.toggle('muted',vmuted);
+  if(micStream)micStream.getAudioTracks().forEach(t=>t.enabled=!vmuted);
+  if(vmuted){if(liveState==='listening'){stopListening();setLive('muted')}}
+  else if(liveState==='muted')listen();
 }
 
 /* ---------- mini window (Chrome/Edge) ---------- */
@@ -783,12 +872,21 @@ renderSettings();
 $('#style').onchange=e=>{S.style=e.target.value;store.set('style',S.style)};
 $('#form').onsubmit=e=>{e.preventDefault();if(busy)return;const i=$('#input');const v=i.value;i.value='';send(v)};
 document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>send(c.dataset.p,true));
-S.voice=store.get('voice','alloy');$('#voice').value=S.voice;
-$('#voice').onchange=e=>{S.voice=e.target.value;store.set('voice',S.voice)};
-$('#testVoice').onclick=()=>{stopSpeaking();speak('Hi, I am Glance. This is how I sound.')};
+S.voice=store.get('voice','alloy');
+$('#vvoice').innerHTML=$('#voice').innerHTML;$('#voice').value=S.voice;$('#vvoice').value=S.voice;
+const setVoice=v=>{S.voice=v;store.set('voice',v);$('#voice').value=v;$('#vvoice').value=v};
+$('#voice').onchange=e=>setVoice(e.target.value);
+$('#vvoice').onchange=e=>setVoice(e.target.value);
+$('#vbarge').checked=S.barge;$('#vbarge').onchange=e=>{S.barge=e.target.checked;store.set('barge',S.barge)};
+const testVoice=()=>{stopSpeaking();speak('Hi, I am Glance. This is how I sound.')};
+$('#testVoice').onclick=testVoice;$('#vtest').onclick=testVoice;
 $('#liveBtn').onclick=()=>liveMode?endLive():startLive();
-$('#liveEnd').onclick=endLive;
-$('#liveInterrupt').onclick=()=>{stopSpeaking();listen()};
+$('#vend').onclick=endLive;
+$('#vmic').onclick=toggleMute;
+$('#vgear').onclick=()=>{$('#vset').hidden=!$('#vset').hidden};
+$('#orb').onclick=()=>{if(liveState==='speaking')bargeIn()};
+window.addEventListener('resize',()=>{if(liveMode)sizeOrb()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&liveMode&&!recording){if(!$('#vset').hidden)$('#vset').hidden=true;else endLive()}});
 $('#attachBtn').onclick=()=>$('#fileIn').click();
 $('#fileIn').onchange=e=>{addFiles(e.target.files);e.target.value=''};
 $('#input').addEventListener('paste',e=>{const f=e.clipboardData&&e.clipboardData.files;if(f&&f.length){e.preventDefault();addFiles(f)}});
