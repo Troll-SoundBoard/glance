@@ -54,15 +54,28 @@ kbd{font:500 12.5px "IBM Plex Sans",monospace;padding:2px 7px;border:1px solid v
 #keybtn,#keybtn2{font-weight:600;justify-content:flex-start;width:100%}
 #keybtn.rec,#keybtn2.rec{border-color:var(--accent);background:var(--accent-soft)}
 .chat{display:flex;flex-direction:column;min-height:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.chat.drag{outline:2px dashed var(--accent);outline-offset:-6px}
 .chat-head{padding:12px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-weight:600}
 #log{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
-.empty{margin:auto;text-align:center;color:var(--muted);max-width:340px}
+.empty{margin:auto;text-align:center;color:var(--muted);max-width:360px}
 .empty strong{display:block;color:var(--ink);font-size:16px;margin-bottom:6px}
-.msg{max-width:min(640px,92%);padding:10px 14px;border-radius:12px;white-space:pre-wrap;word-wrap:break-word}
-.msg.ai{background:var(--bg);border:1px solid var(--line);align-self:flex-start}
-.msg.user{background:var(--user);color:var(--user-ink);align-self:flex-end}
+.msg{max-width:min(680px,92%);padding:10px 14px;border-radius:12px;word-wrap:break-word;overflow-wrap:anywhere}
+.msg .txt{white-space:pre-wrap}
+.msg.ai{background:var(--bg);border:1px solid var(--line);align-self:flex-start;min-width:0}
+.msg.user{background:var(--user);color:var(--user-ink);align-self:flex-end;white-space:pre-wrap}
 .msg img{display:block;max-width:100%;width:320px;border-radius:6px;margin-top:2px}
+.msg img.thumb{width:150px;margin-top:6px}
+.msg .file{font-size:13px;opacity:.85;margin-top:6px}
 .msg.err{border-color:var(--warn);color:var(--warn)}
+.msg code.inl{font:13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.msg .txt+.code,.msg .code+.txt,.msg .code+.code{margin-top:10px}
+.code{border:1px solid #2e3b49;border-radius:8px;overflow:hidden;background:#101821;width:100%}
+.code-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 8px 6px 12px;background:#18232e;color:#93a1af;font-size:12.5px;font-weight:500}
+.code-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.code-actions{display:flex;gap:6px;flex-shrink:0}
+.code-head .btn{padding:3px 10px;font-size:12.5px;background:transparent;color:#e6edf3;border-color:#2e3b49}
+.code-head .btn:hover{border-color:#93a1af}
+.code pre{margin:0;padding:12px;overflow:auto;max-height:440px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#e6edf3;white-space:pre;tab-size:2}
 .typing{display:inline-flex;gap:4px;vertical-align:middle}
 .typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:b 1s infinite}
 .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
@@ -70,8 +83,15 @@ kbd{font:500 12.5px "IBM Plex Sans",monospace;padding:2px 7px;border:1px solid v
 .chips{display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 10px}
 .chip{padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;font-size:13px}
 .chip:hover{border-color:var(--accent);color:var(--accent)}
+.tray{display:flex;flex-wrap:wrap;gap:6px;padding:8px 18px 0;border-top:1px solid var(--line)}
+.att{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 10px;border:1px solid var(--line);border-radius:999px;font-size:13px;background:var(--bg);max-width:260px}
+.att span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.att button{border:0;background:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:0 4px}
 .composer{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
-.composer input{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.tray:not([hidden])+.composer{border-top:0}
+.composer input[type=text]{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.composer .icon{padding:8px 11px}
+.composer .icon svg{width:18px;height:18px}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:9}
 #toast.show{opacity:1}
 [hidden]{display:none!important}
@@ -84,7 +104,7 @@ dialog h3{margin:0 0 8px;font-size:18px}dialog p{margin:0 0 10px;color:var(--mut
 .seg button.active{background:var(--accent);color:var(--accent-ink)}
 .check{display:flex!important;align-items:center;gap:8px;font-weight:400!important}
 .check input{width:auto}
-video{display:none}
+video#video{display:none}
 @media (max-width:860px){
   body{height:auto}main{grid-template-columns:1fr;padding:14px}.chat{min-height:520px}header{padding:12px 14px}.brand small{display:none}
 }
@@ -95,7 +115,7 @@ video{display:none}
 <header>
   <div class="brand">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10.5" r="2.5"/></svg>
-    Glance<small>Answers from whatever is on your screen</small>
+    Glance<small>Answers from your screen and your files</small>
   </div>
   <span class="pill" id="status"><span class="dot"></span><span id="statusText">Screen not shared</span></span>
 </header>
@@ -153,10 +173,10 @@ video{display:none}
     </section>
   </aside>
 
-  <section class="chat" aria-label="Conversation">
+  <section class="chat" id="chat" aria-label="Conversation">
     <div class="chat-head">Conversation <button class="btn danger" id="forgetBtn" style="padding:4px 10px;font-size:13px">Forget everything</button></div>
     <div id="log" aria-live="polite">
-      <div class="empty" id="empty"><strong>Nothing captured yet</strong>Share your screen, then press <kbd class="hk"></kbd> while this page or the mini window is focused.</div>
+      <div class="empty" id="empty"><strong>Nothing captured yet</strong>Attach files with the paperclip (or drag them in), or share your screen and press <kbd class="hk"></kbd> while this page or the mini window is focused.</div>
     </div>
     <div class="chips">
       <button class="chip" data-p="Make it only 15 words.">Make it 15 words</button>
@@ -164,8 +184,13 @@ video{display:none}
       <button class="chip" data-p="Give me more detail.">More detail</button>
       <button class="chip" data-p="Give me a one-sentence version.">One sentence</button>
     </div>
+    <div class="tray" id="tray" hidden></div>
     <form class="composer" id="form">
-      <input type="text" id="input" placeholder="Message Glance…" autocomplete="off" aria-label="Message">
+      <button class="btn icon" id="attachBtn" type="button" title="Attach files: images, PDFs, documents, audio, video, code" aria-label="Attach files">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+      </button>
+      <input type="file" id="fileIn" multiple hidden>
+      <input type="text" id="input" placeholder="Message Glance, or attach files…" autocomplete="off" aria-label="Message">
       <button class="btn primary" id="sendBtn" type="submit">Send</button>
     </form>
   </section>
@@ -178,6 +203,12 @@ video{display:none}
   <label class="check" style="margin:12px 0 18px"><input type="checkbox" id="alsoSettings"> Also reset my settings and delete my saved API key</label>
   <div class="row" style="justify-content:flex-end"><button class="btn" id="forgetNo">Cancel</button><button class="btn danger" id="forgetYes">Forget everything</button></div>
 </dialog>
+
+<dialog id="prevDlg" aria-label="Preview" style="max-width:940px">
+  <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0">Preview</h3><button class="btn" id="prevClose" type="button">Close</button></div>
+  <iframe id="prevFrame" title="Preview" sandbox="allow-scripts allow-forms allow-modals" style="width:100%;height:70vh;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe>
+</dialog>
+
 <video id="video" muted playsinline></video>
 <div id="toast" role="status"></div>
 
@@ -202,6 +233,7 @@ const S={hotkey:store.get('hk','Ctrl+I'),style:store.get('style','Be concise and
 if(!P[S.provider])S.provider='openai';
 const modelKey=()=>S.mode==='puter'?'puter':S.provider;
 const model=()=>S.models[modelKey()]||(S.mode==='puter'?'gpt-4o-mini':P[S.provider].m);
+const baseUrl=()=>((S.provider==='custom'?S.base:P[S.provider].b)||'').replace(/\/+$/,'');
 function saveKey(){store.set('rem',S.remember);if(S.remember)store.set('key',S.key);else try{localStorage.removeItem('key')}catch(e){}}
 function errText(e){
   let m=e&&e.message||'unknown error';
@@ -209,27 +241,30 @@ function errText(e){
   if(m==='Failed to fetch')m='the request was blocked or could not connect. Check the key, base URL, and network; some providers do not allow browser requests';
   return 'Something went wrong: '+m;
 }
-async function ask(msgs,img){
+
+/* ---------- AI call (imgs = array of JPEG data URLs) ---------- */
+async function ask(msgs,imgs){
+  imgs=imgs||[];
   if(S.mode==='puter'){
     if(typeof puter==='undefined')throw new Error('Puter.js failed to load');
     const o={model:model()};
-    if(img){const mid=msgs.slice(1,-1).map(x=>(x.role==='user'?'User: ':'Glance: ')+x.content).join('\n');return textOf(await puter.ai.chat(msgs[0].content+(mid?'\n\nConversation so far:\n'+mid:'')+'\n\n'+msgs[msgs.length-1].content,img,false,o))}
+    if(imgs.length){const mid=msgs.slice(1,-1).map(x=>(x.role==='user'?'User: ':'Glance: ')+x.content).join('\n');return textOf(await puter.ai.chat(msgs[0].content+(mid?'\n\nConversation so far:\n'+mid:'')+'\n\n'+msgs[msgs.length-1].content,imgs.length===1?imgs[0]:imgs,false,o))}
     return textOf(await puter.ai.chat(msgs,false,o));
   }
   const m=model(),sys=msgs[0].content,rest=msgs.slice(1);
   if(!m)throw new Error('Enter a model name in Settings');
   if(!S.key&&S.provider!=='custom')throw new Error('Add your API key in Settings');
-  const last=i=>img&&i===rest.length-1;
+  const last=i=>imgs.length&&i===rest.length-1;
   if(S.provider==='anthropic'){
-    const ms=rest.map((x,i)=>({role:x.role,content:last(i)?[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:img.split(',')[1]}},{type:'text',text:x.content}]:x.content}));
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:m,max_tokens:1024,system:sys,messages:ms})});
+    const ms=rest.map((x,i)=>({role:x.role,content:last(i)?[...imgs.map(d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:d.split(',')[1]}})),{type:'text',text:x.content}]:x.content}));
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:m,max_tokens:4096,system:sys,messages:ms})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(j.error&&j.error.message||'HTTP '+r.status);
     return j.content.map(p=>p.text||'').join('');
   }
-  const base=(S.provider==='custom'?S.base:P[S.provider].b).replace(/\/+$/,'');
+  const base=baseUrl();
   if(!base)throw new Error('Enter a base URL in Settings');
-  const ms=[{role:'system',content:sys},...rest.map((x,i)=>({role:x.role,content:last(i)?[{type:'text',text:x.content},{type:'image_url',image_url:{url:img}}]:x.content}))];
+  const ms=[{role:'system',content:sys},...rest.map((x,i)=>({role:x.role,content:last(i)?[{type:'text',text:x.content},...imgs.map(d=>({type:'image_url',image_url:{url:d}}))]:x.content}))];
   const h={'content-type':'application/json'};if(S.key)h.authorization='Bearer '+S.key;
   const r=await fetch(base+'/chat/completions',{method:'POST',headers:h,body:JSON.stringify({model:m,messages:ms})});
   const j=await r.json().catch(()=>({}));
@@ -244,6 +279,7 @@ function renderSettings(){
   $('#modeNote').textContent=k?'Requests go straight from your browser to the provider.':'Free through Puter.js. A Puter sign-in popup appears on first use.';
   $('#provider').value=S.provider;$('#base').value=S.base;$('#apikey').value=S.key;$('#remember').checked=S.remember;$('#model').value=model();
 }
+const FMT=' Formatting: whenever you output code, a terminal command, or the contents of a file, put it in its own fenced code block with a language tag (```bash, ```python, ```html) and keep explanations outside the block. When asked to create a file, output the complete file in one fenced block and put the filename after the language, like ```html index.html. Use one block per file.';
 const SYS='You are Glance, an expert assistant that sees the user’s screen. First work out what the user needs from what is on screen, then do it directly. '+
 'Multiple choice: state the correct option (letter and text), then one short reason. '+
 'Open question (history, science, trivia): answer accurately in a few sentences. '+
@@ -253,14 +289,14 @@ const SYS='You are Glance, an expert assistant that sees the user’s screen. Fi
 'If there are several questions, answer each one, numbered. '+
 'Otherwise state what matters on screen and the next step. '+
 'Read all visible text carefully, including small print. Ignore browser controls and the Glance app itself. '+
-'No preamble and no mention of screenshots or being an AI. If unsure, say what is uncertain in a few words.';
+'No preamble and no mention of screenshots or being an AI. If unsure, say what is uncertain in a few words.'+FMT;
 const DEEP=' Think carefully and double-check your answer before replying.';
-const CHAT_SYS='You are Glance, a helpful assistant that remembers the whole conversation with the user. Sometimes they capture their screen (shown as [Screen captured] followed by your answer) and sometimes they just talk to you. Answer directly and concisely. When they ask you to change an earlier answer, reply with only the revised answer.';
-const EMPTY='<div class="empty" id="empty"><strong>No messages yet</strong>Type a message below, or share your screen and press <kbd class="hk"></kbd> to ask about it.</div>';
+const CHAT_SYS='You are Glance, a helpful assistant that remembers the whole conversation with the user. Sometimes they capture their screen (shown as [Screen captured] followed by your answer), sometimes they attach files (their extracted text, transcripts, or images appear in the message), and sometimes they just talk to you. Answer directly and concisely. When they ask you to change an earlier answer, reply with only the revised answer.'+FMT;
+const EMPTY='<div class="empty" id="empty"><strong>No messages yet</strong>Type a message, attach files with the paperclip (or drag them in), or share your screen and press <kbd class="hk"></kbd> to ask about it.</div>';
 let beepCtx,lastPip='';
 function saveHist(){let t=0;while(t++<20){try{localStorage.setItem('hist',JSON.stringify(history));return}catch(e){if(history.length<=40)return;history.splice(0,20)}}}
-function ctx(){let n=0,i=history.length;while(i>0&&n+history[i-1].content.length<=60000){n+=history[i-1].content.length;i--}const m=history.slice(i);while(m.length&&m[0].role!=='user')m.shift();return m}
-let stream=null,busy=false,recording=false,history=store.get('hist',[]),pip=null,pendingPip=false,toastT;
+function ctx(){let n=0,i=history.length;while(i>0&&n+history[i-1].content.length<=60000){n+=history[i-1].content.length;i--}const m=history.slice(i);while(m.length&&m[0].role!=='user')m.shift();return m.map(x=>({role:x.role,content:x.content}))}
+let stream=null,busy=false,recording=false,history=store.get('hist',[]),pip=null,pendingPip=false,toastT,pending=[];
 
 const video=$('#video'),log=$('#log');
 
@@ -307,14 +343,83 @@ function frame(){
   return c.toDataURL('image/jpeg',.82);
 }
 
+/* ---------- code blocks, copy, download, preview ---------- */
+const EXT={javascript:'js',js:'js',typescript:'ts',ts:'ts',jsx:'jsx',tsx:'tsx',python:'py',py:'py',bash:'sh',sh:'sh',shell:'sh',zsh:'sh',console:'sh',html:'html',css:'css',json:'json',java:'java',c:'c',cpp:'cpp','c++':'cpp',csharp:'cs',cs:'cs',go:'go',rust:'rs',ruby:'rb',php:'php',sql:'sql',yaml:'yml',yml:'yml',xml:'xml',markdown:'md',md:'md',svg:'svg',kotlin:'kt',swift:'swift',lua:'lua',powershell:'ps1',bat:'bat',text:'txt',txt:'txt',csv:'csv',toml:'toml',ini:'ini',dockerfile:'Dockerfile'};
+const MIME={html:'text/html',svg:'image/svg+xml',json:'application/json',css:'text/css',csv:'text/csv',xml:'application/xml',js:'text/javascript'};
+function parseInfo(info){
+  const t=info.trim().split(/\s+/).filter(Boolean);let lang=(t[0]||'').toLowerCase(),name=t[1]||'';
+  if(lang.includes(':')){const p=lang.split(':');lang=p[0];name=name||p.slice(1).join(':')}
+  else if(lang.includes('.')&&!name){name=t[0];lang=(t[0].split('.').pop()||'').toLowerCase()}
+  return{lang,name};
+}
+function copyText(t,btn){
+  const done=()=>{const o=btn.dataset.o||btn.textContent;btn.dataset.o=o;btn.textContent='Copied ✓';clearTimeout(btn._t);btn._t=setTimeout(()=>btn.textContent=o,1500)};
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(done,()=>fallbackCopy(t,done));else fallbackCopy(t,done);
+}
+function fallbackCopy(t,done){const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){toast('Copy failed. Select the text and copy it manually.')}a.remove()}
+function download(name,text,ext){
+  const b=new Blob([text],{type:(MIME[ext]||'text/plain')+';charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+function preview(code,ext){
+  $('#prevFrame').srcdoc=ext==='svg'?'<!doctype html><body style="margin:0;display:grid;place-items:center;min-height:100vh">'+code+'</body>':code;
+  $('#prevDlg').showModal();
+}
+function mkBtn(label,fn){const b=document.createElement('button');b.type='button';b.className='btn';b.textContent=label;b.onclick=()=>fn(b);return b}
+function codeBlock(info,code){
+  const {lang,name}=parseInfo(info),ext=EXT[lang]||(lang&&lang.length<=5?lang:'txt'),fname=name||('file.'+ext);
+  const w=document.createElement('div');w.className='code';
+  const h=document.createElement('div');h.className='code-head';
+  const n=document.createElement('span');n.className='code-name';n.textContent=name||lang||'code';
+  const a=document.createElement('span');a.className='code-actions';
+  if(ext==='html'||ext==='svg')a.appendChild(mkBtn('Preview',()=>preview(code,ext)));
+  a.appendChild(mkBtn('Download',()=>download(fname,code,ext)));
+  a.appendChild(mkBtn('Copy',b=>copyText(code,b)));
+  h.append(n,a);
+  const pre=document.createElement('pre'),c=document.createElement('code');c.textContent=code;pre.appendChild(c);
+  w.append(h,pre);return w;
+}
+function textBlock(s){
+  s=s.replace(/^\n+|\n+$/g,'');if(!s.trim())return null;
+  const d=document.createElement('div');d.className='txt';
+  s.split(/(`[^`\n]+`|\*\*[^*\n]+\*\*)/).forEach(p=>{
+    if(!p)return;
+    if(p.length>2&&p[0]==='`'){const c=document.createElement('code');c.className='inl';c.textContent=p.slice(1,-1);d.appendChild(c)}
+    else if(p.length>4&&p.startsWith('**')){const b=document.createElement('strong');b.textContent=p.slice(2,-2);d.appendChild(b)}
+    else d.appendChild(document.createTextNode(p));
+  });
+  return d;
+}
+function renderRich(el,text){
+  el.textContent='';
+  const re=/```([^\n]*)\n([\s\S]*?)(```|$)/g;let last=0,m,t;
+  while((m=re.exec(text))){
+    if(m.index>last&&(t=textBlock(text.slice(last,m.index))))el.appendChild(t);
+    el.appendChild(codeBlock(m[1],m[2].replace(/\n$/,'')));
+    last=re.lastIndex;if(m[0].length===0)re.lastIndex++;
+  }
+  if(last<text.length&&(t=textBlock(text.slice(last))))el.appendChild(t);
+  if(!el.childNodes.length)el.textContent=text;
+}
+
 /* ---------- chat ---------- */
 function add(role,text,img,typing){
   $('#empty')&&$('#empty').remove();
   const d=document.createElement('div');d.className='msg '+role;
   if(typing)d.innerHTML='<span class="typing"><i></i><i></i><i></i></span>';
-  else if(text)d.textContent=text;
+  else if(text){if(role==='ai')renderRich(d,text);else d.textContent=text}
   if(img){const i=new Image();i.src=img;i.alt='Captured screenshot';d.appendChild(i)}
   log.appendChild(d);while(log.children.length>300)log.firstChild.remove();log.scrollTop=log.scrollHeight;return d;
+}
+function addUser(text,files){
+  $('#empty')&&$('#empty').remove();
+  const d=document.createElement('div');d.className='msg user';
+  if(text){const t=document.createElement('div');t.textContent=text;d.appendChild(t)}
+  files.forEach(f=>{
+    if((f.type||'').startsWith('image/')){const i=new Image();i.className='thumb';i.alt=f.name;i.src=URL.createObjectURL(f);i.onload=()=>URL.revokeObjectURL(i.src);d.appendChild(i)}
+    else{const x=document.createElement('div');x.className='file';x.textContent='📎 '+f.name;d.appendChild(x)}
+  });
+  log.appendChild(d);log.scrollTop=log.scrollHeight;return d;
 }
 function textOf(r){
   if(typeof r==='string')return r;
@@ -324,7 +429,7 @@ function textOf(r){
   if(Array.isArray(c))return c.map(p=>p.text||'').join('');
   return String(r);
 }
-function setMsg(el,text,err){el.textContent=text;el.classList.toggle('err',!!err);log.scrollTop=log.scrollHeight}
+function setMsg(el,text,err){if(err){el.textContent=text}else renderRich(el,text);el.classList.toggle('err',!!err);log.scrollTop=log.scrollHeight}
 function beep(){try{beepCtx=beepCtx||new (window.AudioContext||window.webkitAudioContext)();beepCtx.resume();const o=beepCtx.createOscillator(),g=beepCtx.createGain(),n=beepCtx.currentTime;o.connect(g);g.connect(beepCtx.destination);o.frequency.value=880;g.gain.setValueAtTime(.12,n);g.gain.exponentialRampToValueAtTime(.001,n+.25);o.start();o.stop(n+.25)}catch(e){}}
 function pipShow(t){lastPip=t;if(pip&&!pip.closed){const a=pip.document.getElementById('ans');if(a)a.textContent=t}}
 function notifHelp(){
@@ -356,7 +461,7 @@ async function capture(){
   add('user','Screen captured',img);
   const m=add('ai','',null,true);
   try{
-    const t=(await ask([{role:'system',content:SYS+(S.deep?DEEP:'')+' You remember the earlier conversation; use it when relevant. '+S.style},...ctx(),{role:'user',content:'Respond to this screenshot.'}],img)).trim();
+    const t=(await ask([{role:'system',content:SYS+(S.deep?DEEP:'')+' You remember the earlier conversation; use it when relevant. '+S.style},...ctx(),{role:'user',content:'Respond to this screenshot.'}],[img])).trim();
     setMsg(m,t);
     history.push({role:'user',content:'[Screen captured]'},{role:'assistant',content:t});saveHist();
     notify(t);
@@ -364,15 +469,143 @@ async function capture(){
   busy=false;ui();
 }
 
-async function send(text){
-  text=text.trim();if(!text||busy)return;
-  busy=true;ui();pipShow('Thinking…');add('user',text);history.push({role:'user',content:text});
-  const m=add('ai','',null,true);
+/* ---------- file reading ---------- */
+const loaded={};
+function loadScript(url){return loaded[url]||(loaded[url]=new Promise((res,rej)=>{const s=document.createElement('script');s.src=url;s.onload=res;s.onerror=()=>{delete loaded[url];rej(new Error('Could not load a helper library. Check your connection.'))};document.head.appendChild(s)}))}
+const PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',PDFW='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  MAMMOTH='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js',XLSXJS='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+async function loadPdfJs(){
+  await loadScript(PDFJS);
+  if(!window.pdfjsLib.GlobalWorkerOptions.workerSrc||window.pdfjsLib.GlobalWorkerOptions.workerSrc===PDFW){
+    try{const t=await (await fetch(PDFW)).text();window.pdfjsLib.GlobalWorkerOptions.workerSrc=URL.createObjectURL(new Blob([t],{type:'text/javascript'}))}
+    catch(e){window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFW}
+  }
+}
+const fmtSize=n=>n<1024?n+' B':n<1048576?Math.round(n/1024)+' KB':(n/1048576).toFixed(1)+' MB';
+const extOf=f=>(f.name.split('.').pop()||'').toLowerCase();
+const block=(n,b)=>'\n--- File: '+n+' ---\n'+(b.length>40000?b.slice(0,40000)+'\n[truncated]':b)+'\n--- End of '+n+' ---\n';
+function once(el,ev,ms){return new Promise((res,rej)=>{const t=setTimeout(()=>{el.removeEventListener(ev,h);rej(new Error('Timed out reading the media'))},ms||15000);const h=()=>{clearTimeout(t);res()};el.addEventListener(ev,h,{once:true})})}
+async function imgData(f,max){
+  max=max||1920;const url=URL.createObjectURL(f);
   try{
+    const im=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('This image format cannot be decoded by the browser'));i.src=url});
+    const w=im.naturalWidth||1024,h=im.naturalHeight||1024,k=Math.min(1,max/Math.max(w,h)),c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(w*k));c.height=Math.max(1,Math.round(h*k));
+    const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
+    return c.toDataURL('image/jpeg',.85);
+  }finally{URL.revokeObjectURL(url)}
+}
+async function videoFrames(f,n){
+  const url=URL.createObjectURL(f),v=document.createElement('video');v.muted=true;v.preload='auto';v.playsInline=true;
+  try{
+    const lm=once(v,'loadedmetadata');v.src=url;await lm;
+    let dur=v.duration;if(!isFinite(dur)||dur<=0)dur=1;
+    const out=[],w=v.videoWidth||640,h=v.videoHeight||360,k=Math.min(1,1024/Math.max(w,h)),c=document.createElement('canvas');
+    c.width=Math.round(w*k);c.height=Math.round(h*k);const x=c.getContext('2d');
+    for(let i=0;i<n;i++){const sk=once(v,'seeked');v.currentTime=Math.min(dur*(i+.5)/n,Math.max(0,dur-.05));await sk;x.drawImage(v,0,0,c.width,c.height);out.push(c.toDataURL('image/jpeg',.75))}
+    return out;
+  }finally{URL.revokeObjectURL(url)}
+}
+const toB64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=()=>rej(new Error('Could not read the file'));r.readAsDataURL(f)});
+async function transcribe(f){
+  if(S.mode==='puter'){
+    if(typeof puter==='undefined'||!puter.ai||!puter.ai.speech2txt)throw new Error('Puter transcription is unavailable');
+    const r=await puter.ai.speech2txt(f);
+    return (typeof r==='string'?r:(r&&r.text)||'').trim();
+  }
+  if(f.size>25e6)throw new Error('Audio over 25 MB is too large to transcribe');
+  const p=S.provider;
+  if(!S.key&&p!=='custom')throw new Error('Add your API key in Settings');
+  if(p==='gemini'){
+    const e=extOf(f);if(e!=='mp3'&&e!=='wav')throw new Error('With Gemini, audio must be MP3 or WAV');
+    const r=await fetch(P.gemini.b+'/chat/completions',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+S.key},body:JSON.stringify({model:model(),messages:[{role:'user',content:[{type:'text',text:'Transcribe this audio verbatim. Output only the transcript.'},{type:'input_audio',input_audio:{data:await toB64(f),format:e}}]}]})});
+    const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error&&j.error.message||'HTTP '+r.status);
+    return String(j.choices&&j.choices[0]&&j.choices[0].message.content||'').trim();
+  }
+  if(p==='openai'||p==='groq'||p==='custom'){
+    const base=baseUrl();if(!base)throw new Error('Enter a base URL in Settings');
+    const fd=new FormData();fd.append('file',f);fd.append('model',p==='groq'?'whisper-large-v3-turbo':'whisper-1');
+    const r=await fetch(base+'/audio/transcriptions',{method:'POST',headers:S.key?{authorization:'Bearer '+S.key}:{},body:fd});
+    const j=await r.json().catch(()=>({}));if(!r.ok){const er=j.error;throw new Error(er&&(er.message||er)||'HTTP '+r.status)}
+    return (j.text||'').trim();
+  }
+  throw new Error('This provider cannot transcribe audio. Use Puter mode, or OpenAI, Groq or Gemini');
+}
+async function readPdf(f,out){
+  await loadPdfJs();
+  const pdf=await window.pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise,pages=Math.min(pdf.numPages,60);
+  let text='';
+  for(let p=1;p<=pages;p++){const pg=await pdf.getPage(p),tc=await pg.getTextContent();text+='[Page '+p+']\n'+tc.items.map(i=>i.str).join(' ')+'\n'}
+  if(text.replace(/\[Page \d+\]/g,'').trim().length<100){
+    const n=Math.min(pdf.numPages,6);
+    for(let p=1;p<=n;p++){
+      const pg=await pdf.getPage(p),vp=pg.getViewport({scale:1.5}),c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;
+      await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;out.imgs.push(c.toDataURL('image/jpeg',.8));
+    }
+    out.text+='\n[PDF '+f.name+' has no selectable text (probably scanned). The first '+n+' pages are attached as images.]\n';
+  }else out.text+=block(f.name,text)+(pdf.numPages>pages?'[Only the first '+pages+' of '+pdf.numPages+' pages were read.]\n':'');
+}
+async function readOne(f,out){
+  const n=f.name,e=extOf(f),t=f.type||'';
+  if(t.startsWith('image/')||['png','jpg','jpeg','gif','webp','bmp','svg'].includes(e)){out.imgs.push(await imgData(f));out.text+='\n[Image attached: '+n+']\n';return}
+  if(t.startsWith('video/')||['mp4','mov','webm','mkv','m4v'].includes(e)){
+    const fr=await videoFrames(f,6);out.imgs.push(...fr);out.text+='\n[Video attached: '+n+'. '+fr.length+' evenly spaced frames are attached as images.]\n';
+    if(f.size<=25e6){try{const tr=await transcribe(f);if(tr)out.text+='--- Audio transcript of '+n+' ---\n'+tr+'\n'}catch(x){out.text+='[Could not transcribe the video audio: '+x.message+']\n'}}
+    else out.text+='[Video is over 25 MB, so its audio was not transcribed.]\n';
+    return;
+  }
+  if(t.startsWith('audio/')||['mp3','wav','m4a','ogg','flac','aac','opus'].includes(e)){const tr=await transcribe(f);out.text+='\n--- Audio transcript: '+n+' ---\n'+(tr||'(no speech detected)')+'\n';return}
+  if(e==='pdf'||t==='application/pdf'){await readPdf(f,out);return}
+  if(e==='docx'){await loadScript(MAMMOTH);const r=await window.mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()});out.text+=block(n,r.value);return}
+  if(['xlsx','xls','ods'].includes(e)){await loadScript(XLSXJS);const wb=window.XLSX.read(await f.arrayBuffer());out.text+=block(n,wb.SheetNames.map(s=>'# Sheet: '+s+'\n'+window.XLSX.utils.sheet_to_csv(wb.Sheets[s])).join('\n\n'));return}
+  if(['doc','ppt','pptx','zip','rar','7z','exe','dmg'].includes(e))throw new Error('.'+e+' files are not supported. Try saving as PDF, DOCX or text');
+  const s=await f.text();if(s.includes('\u0000'))throw new Error('this looks like a binary file that Glance cannot read');
+  out.text+=block(n,s);
+}
+async function readFiles(files){
+  const out={text:'',imgs:[]};
+  for(const f of files){
+    try{await readOne(f,out)}catch(e){out.text+='\n--- File: '+f.name+' ---\n[Could not read this file: '+e.message+']\n'}
+  }
+  if(out.imgs.length>10){out.imgs=out.imgs.slice(0,10);out.text+='\n[Only the first 10 images were sent.]\n'}
+  return out;
+}
+
+/* ---------- attachments tray ---------- */
+function renderTray(){
+  const t=$('#tray');t.innerHTML='';t.hidden=!pending.length;
+  pending.forEach((f,i)=>{
+    const a=document.createElement('div');a.className='att';
+    const s=document.createElement('span');s.textContent=f.name+' · '+fmtSize(f.size);s.title=f.name;
+    const x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label','Remove '+f.name);x.onclick=()=>{pending.splice(i,1);renderTray()};
+    a.append(s,x);t.appendChild(a);
+  });
+}
+function addFiles(list){
+  const a=[...list];if(!a.length)return;
+  for(const f of a){if(pending.length>=10){toast('You can attach up to 10 files at a time.');break}if(f.size>200e6){toast(f.name+' is over 200 MB and was skipped.');continue}pending.push(f)}
+  renderTray();$('#input').focus();
+}
+
+async function send(text,noFiles){
+  if(busy)return;
+  text=(text||'').trim();
+  let files=[];if(!noFiles){files=pending;pending=[];renderTray()}
+  if(!text&&!files.length)return;
+  busy=true;ui();pipShow(files.length?'Reading files…':'Thinking…');
+  addUser(text,files);
+  const m=add('ai','',null,true);let pushed=false;
+  try{
+    const r=files.length?await readFiles(files):{text:'',imgs:[]};
+    const q=text||'Look at the attached file'+(files.length>1?'s':'')+' and tell me what matters.';
+    const label=[text,...files.map(f=>'📎 '+f.name)].filter(Boolean).join('\n');
+    history.push({role:'user',content:q+(r.text?'\n\n'+r.text.slice(0,12000):''),label});pushed=true;
     const msgs=[{role:'system',content:CHAT_SYS+' '+S.style},...ctx()];
-    const t=(await ask(msgs)).trim();
+    msgs[msgs.length-1]={role:'user',content:q+(r.text?'\n\n'+r.text:'')};
+    pipShow('Thinking…');
+    const t=(await ask(msgs,r.imgs)).trim();
     setMsg(m,t);history.push({role:'assistant',content:t});saveHist();notify(t);
-  }catch(e){history.pop();setMsg(m,errText(e),true);pipShow(errText(e))}
+  }catch(e){if(pushed)history.pop();setMsg(m,errText(e),true);pipShow(errText(e))}
   busy=false;ui();
 }
 
@@ -382,7 +615,7 @@ async function openPip(){
   pip.document.head.innerHTML='<style>body{margin:0;display:flex;flex-direction:column;height:100vh;font:14px system-ui;background:#17212b;color:#fff}button{padding:10px 16px;border:0;border-radius:8px;background:#3cc3b8;color:#06211f;font:600 14px system-ui;cursor:pointer}p{margin:6px 0 0;font-size:12px;color:#93a1af}#top{padding:10px 12px 4px;text-align:center}#ans{flex:1;overflow:auto;padding:4px 12px;font-size:13px;line-height:1.4;white-space:pre-wrap}form{display:flex;gap:6px;padding:8px 12px 12px}input{flex:1;min-width:0;padding:8px 10px;border:1px solid #2a3643;border-radius:8px;background:#0f151b;color:#fff;font:14px system-ui}</style>';
   pip.document.body.innerHTML='<div id="top"><button id="go">Ask about screen</button><p>'+S.hotkey+' to ask · '+S.closeKey+' to close</p></div><div id="ans"></div><form id="f"><input id="t" placeholder="Message Glance…" autocomplete="off"><button>Send</button></form>';
   pip.document.getElementById('ans').textContent=lastPip;
-  pip.document.getElementById('f').onsubmit=e=>{e.preventDefault();const t=pip.document.getElementById('t'),v=t.value;t.value='';send(v)};
+  pip.document.getElementById('f').onsubmit=e=>{e.preventDefault();const t=pip.document.getElementById('t'),v=t.value;t.value='';send(v,true)};
   pip.document.getElementById('go').onclick=()=>capture();
   pip.addEventListener('pagehide',()=>{pip=null});
   pip.addEventListener('keydown',onKey);
@@ -439,8 +672,19 @@ $('#remember').onchange=e=>{S.remember=e.target.checked;saveKey()};
 $('#model').onchange=e=>{S.models[modelKey()]=e.target.value.trim();store.set('models',S.models);renderSettings()};
 renderSettings();
 $('#style').onchange=e=>{S.style=e.target.value;store.set('style',S.style)};
-$('#form').onsubmit=e=>{e.preventDefault();const i=$('#input');const v=i.value;i.value='';send(v)};
-document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>send(c.dataset.p));
+$('#form').onsubmit=e=>{e.preventDefault();if(busy)return;const i=$('#input');const v=i.value;i.value='';send(v)};
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>send(c.dataset.p,true));
+$('#attachBtn').onclick=()=>$('#fileIn').click();
+$('#fileIn').onchange=e=>{addFiles(e.target.files);e.target.value=''};
+$('#input').addEventListener('paste',e=>{const f=e.clipboardData&&e.clipboardData.files;if(f&&f.length){e.preventDefault();addFiles(f)}});
+const chat=$('#chat');
+chat.addEventListener('dragover',e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')){e.preventDefault();chat.classList.add('drag')}});
+chat.addEventListener('dragleave',e=>{if(!chat.contains(e.relatedTarget))chat.classList.remove('drag')});
+chat.addEventListener('drop',e=>{e.preventDefault();chat.classList.remove('drag');if(e.dataTransfer)addFiles(e.dataTransfer.files)});
+window.addEventListener('dragover',e=>e.preventDefault());
+window.addEventListener('drop',e=>e.preventDefault());
+$('#prevClose').onclick=()=>$('#prevDlg').close();
+$('#prevDlg').addEventListener('close',()=>{$('#prevFrame').srcdoc=''});
 $('#forgetBtn').onclick=()=>{$('#alsoSettings').checked=false;$('#forgetDlg').showModal()};
 $('#forgetNo').onclick=()=>$('#forgetDlg').close();
 $('#forgetYes').onclick=()=>{
@@ -450,7 +694,7 @@ $('#forgetYes').onclick=()=>{
 };
 if(!Array.isArray(history))history=[];
 log.innerHTML=EMPTY;
-history.forEach(x=>add(x.role==='user'?'user':'ai',x.content==='[Screen captured]'?'Screen captured':x.content));
+history.forEach(x=>add(x.role==='user'?'user':'ai',x.content==='[Screen captured]'?'Screen captured':(x.label||x.content)));
 {const la=history.slice().reverse().find(x=>x.role==='assistant');if(la)lastPip=la.content}
 ui();
 })();
