@@ -78,6 +78,17 @@ kbd{font:500 12.5px "IBM Plex Sans",monospace;padding:2px 7px;border:1px solid v
 .code-head .btn{padding:3px 10px;font-size:12.5px;background:transparent;color:#e6edf3;border-color:#2e3b49}
 .code-head .btn:hover{border-color:#93a1af}
 .code pre{margin:0;padding:12px;overflow:auto;max-height:440px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#e6edf3;white-space:pre;tab-size:2}
+.fcard{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden;width:100%}
+.frow{display:flex;align-items:center;gap:12px;padding:10px 12px}
+.fico{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;font:600 11px/1 "IBM Plex Sans",system-ui,sans-serif;letter-spacing:.03em;color:#fff;background:var(--accent);flex-shrink:0;text-transform:uppercase}
+.fico.pdf{background:#d93f3f}.fico.docx{background:#2b6fd6}.fico.xlsx,.fico.csv{background:#1f9d57}.fico.html,.fico.svg{background:#e08a1e}
+.fmeta{flex:1;min-width:0;cursor:pointer}
+.fmeta b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fmeta small{color:var(--muted);font-size:12.5px}
+.fact{display:flex;gap:6px;flex-shrink:0}
+.fact .btn{padding:5px 12px;font-size:13px}
+.fcard .code{border:0;border-top:1px solid var(--line);border-radius:0}
+.msg .txt+.fcard,.msg .fcard+.txt,.msg .fcard+.fcard,.msg .code+.fcard,.msg .fcard+.code{margin-top:10px}
 .typing{display:inline-flex;gap:4px;vertical-align:middle}
 .typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:b 1s infinite}
 .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
@@ -441,6 +452,26 @@ function codeBlock(info,code){
   const pre=document.createElement('pre'),c=document.createElement('code');c.textContent=code;pre.appendChild(c);
   w.append(h,pre);return w;
 }
+function fileCard(info,code){
+  const {lang,name}=parseInfo(info),fe=(name.split('.').pop()||'').toLowerCase(),ext=fe||EXT[lang]||'txt';
+  const kind={pdf:'Document',docx:'Document',md:'Document',txt:'Document',xlsx:'Spreadsheet',csv:'Spreadsheet',svg:'Image'}[ext]||'Code';
+  const w=document.createElement('div');w.className='fcard';
+  const row=document.createElement('div');row.className='frow';
+  const ic=document.createElement('div');ic.className='fico '+ext;ic.textContent=ext.slice(0,4);
+  const meta=document.createElement('div');meta.className='fmeta';meta.title='Show or hide the content';
+  const nm=document.createElement('b');nm.textContent=name;
+  const sm=document.createElement('small');sm.textContent=kind+' · '+ext.toUpperCase();
+  meta.append(nm,sm);
+  const view=codeBlock(info,code);view.hidden=true;
+  const act=document.createElement('div');act.className='fact';
+  if(ext==='html'||ext==='svg')act.appendChild(mkBtn('Preview',()=>preview(code,ext)));
+  const vb=mkBtn('View',b=>{view.hidden=!view.hidden;b.textContent=view.hidden?'View':'Hide'});
+  meta.onclick=()=>vb.click();
+  act.appendChild(vb);
+  const dl=mkBtn('Download',async b=>{const o=b.textContent;b.textContent='Building…';try{saveBlob(await fileBlob(name,code,ext),name)}catch(x){toast('Could not build the file: '+x.message)}b.textContent=o});
+  dl.classList.add('primary');act.appendChild(dl);
+  row.append(ic,meta,act);w.append(row,view);return w;
+}
 function textBlock(s){
   s=s.replace(/^\n+|\n+$/g,'');if(!s.trim())return null;
   const d=document.createElement('div');d.className='txt';
@@ -457,7 +488,7 @@ function renderRich(el,text){
   const re=/```([^\n]*)\n([\s\S]*?)(```|$)/g;let last=0,m,t;const files=[];
   while((m=re.exec(text))){
     if(m.index>last&&(t=textBlock(text.slice(last,m.index))))el.appendChild(t);
-    {const c=m[2].replace(/\n$/,''),pi=parseInfo(m[1]);el.appendChild(codeBlock(m[1],c));if(pi.name&&m[3]==='```')files.push({name:pi.name,code:c})}
+    {const c=m[2].replace(/\n$/,''),pi=parseInfo(m[1]);el.appendChild(pi.name?fileCard(m[1],c):codeBlock(m[1],c));if(pi.name&&m[3]==='```')files.push({name:pi.name,code:c})}
     last=re.lastIndex;if(m[0].length===0)re.lastIndex++;
   }
   if(last<text.length&&(t=textBlock(text.slice(last))))el.appendChild(t);
