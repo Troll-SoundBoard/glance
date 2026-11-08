@@ -111,6 +111,14 @@ kbd{font:500 12.5px "IBM Plex Sans",monospace;padding:2px 7px;border:1px solid v
 .vwtab{border-collapse:collapse;font-size:13.5px}.vwtab td{border:1px solid var(--line);padding:5px 10px;white-space:nowrap}.vwtab tr:first-child td{font-weight:600;background:var(--bg)}
 .vwmsg{padding:24px;color:var(--muted)}
 @media (min-width:1200px){body.vopen{padding-right:580px}}
+#setScrim{position:fixed;inset:0;z-index:16;background:rgba(0,0,0,.35)}
+#settingsPanel{position:fixed;top:0;left:0;bottom:0;width:min(400px,100%);background:var(--surface);border-right:1px solid var(--line);z-index:17;display:flex;flex-direction:column;box-shadow:8px 0 24px rgba(0,0,0,.18)}
+.setbody{flex:1;overflow:auto;padding:4px 16px 24px}
+.setbody>label:first-child{margin-top:8px}
+.setbody p{margin:0 0 12px;color:var(--muted);font-size:13.5px}
+.dz{margin-top:24px;padding:14px;border:1px solid var(--warn);border-radius:var(--radius)}
+.dz h3{margin:0 0 4px;font-size:15px;color:var(--warn)}
+.dz p{margin:0 0 12px}
 .typing{display:inline-flex;gap:4px;vertical-align:middle}
 .typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:b 1s infinite}
 .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
@@ -194,6 +202,11 @@ video#video{display:none}
         <button class="btn primary" id="shareBtn">Share screen</button>
         <button class="btn" id="stopBtn" disabled>Stop</button>
       </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="captureBtn" disabled>Capture now</button>
+        <button class="btn" id="pipBtn" title="Opens a small always-on-top window with a capture button">Mini window</button>
+      </div>
+
     </section>
 
     <section class="card">
@@ -203,51 +216,10 @@ video#video{display:none}
       <p id="notifHelp" style="margin:10px 0 0"></p>
     </section>
 
-    <section class="card">
-      <h2>Settings</h2>
-      <label>Appearance</label>
-      <div class="seg three" id="themeSeg" role="group" aria-label="Appearance"><button type="button" data-t="auto">Auto</button><button type="button" data-t="light">Light</button><button type="button" data-t="dark">Dark</button></div>
-      <label for="keybtn">Hotkey (click, then press a new combination)</label>
-      <button class="btn" id="keybtn"></button>
-      <label for="keybtn2">Close mini window hotkey</label>
-      <button class="btn" id="keybtn2"></button>
-      <label>AI source</label>
-      <div class="seg" role="group" aria-label="AI source">
-        <button type="button" id="modePuter">Puter (free)</button>
-        <button type="button" id="modeKey">My API key</button>
-      </div>
-      <p id="modeNote" style="margin:8px 0 0"></p>
-      <div id="keyFields" hidden>
-        <label for="provider">Provider</label>
-        <select id="provider"></select>
-        <div id="baseWrap" hidden>
-          <label for="base">Base URL (OpenAI-compatible)</label>
-          <input type="text" id="base" placeholder="https://your-host/v1" spellcheck="false">
-        </div>
-        <label for="apikey">API key</label>
-        <input type="password" id="apikey" autocomplete="off" spellcheck="false" placeholder="Paste your key">
-        <label class="check"><input type="checkbox" id="remember"> Remember key on this device</label>
-      </div>
-      <label for="model">Model</label>
-      <input type="text" id="model" spellcheck="false" placeholder="Model name">
-      <label for="style">Answer style</label>
-      <textarea id="style"></textarea>
-      <label for="voice">AI voice (live mode)</label>
-      <div class="row" style="flex-wrap:nowrap"><select id="voice">
-        <option value="alloy">Alloy</option><option value="nova">Nova</option><option value="shimmer">Shimmer</option>
-        <option value="echo">Echo</option><option value="onyx">Onyx</option><option value="fable">Fable</option>
-        <option value="browser">Browser voice (offline)</option></select>
-        <button class="btn" id="testVoice" type="button">Test</button></div>
-      <label class="check" style="margin-top:10px"><input type="checkbox" id="deep"> Double-check answers (slower, more accurate)</label>
-      <div class="row" style="margin-top:12px">
-        <button class="btn" id="captureBtn" disabled>Capture now</button>
-        <button class="btn" id="pipBtn" title="Opens a small always-on-top window with a capture button">Mini window</button>
-      </div>
-    </section>
   </aside>
 
   <section class="chat" id="chat" aria-label="Conversation">
-    <div class="chat-head">Conversation <button class="btn danger" id="forgetBtn" style="padding:4px 10px;font-size:13px">Forget everything</button></div>
+    <div class="chat-head">Conversation <button class="btn" id="setBtn" type="button" style="padding:4px 12px;font-size:13px" aria-label="Open settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings</button></div>
     <div id="log" aria-live="polite">
       <div class="empty" id="empty"><strong>Nothing captured yet</strong>Attach files with the paperclip (or drag them in), or share your screen and press <kbd class="hk"></kbd> while this page or the mini window is focused.</div>
     </div>
@@ -302,6 +274,52 @@ video#video{display:none}
   <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0">Preview</h3><button class="btn" id="prevClose" type="button">Close</button></div>
   <iframe id="prevFrame" title="Preview" sandbox="allow-scripts allow-forms allow-modals" style="width:100%;height:70vh;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe>
 </dialog>
+
+<div id="setScrim" hidden></div>
+<aside id="settingsPanel" hidden aria-label="Settings">
+  <div class="vwhead"><div class="vwtitle">Settings</div><button class="btn" id="setClose" type="button" aria-label="Close settings">✕</button></div>
+  <div class="setbody">
+      <label>Appearance</label>
+      <div class="seg three" id="themeSeg" role="group" aria-label="Appearance"><button type="button" data-t="auto">Auto</button><button type="button" data-t="light">Light</button><button type="button" data-t="dark">Dark</button></div>
+      <label for="keybtn">Hotkey (click, then press a new combination)</label>
+      <button class="btn" id="keybtn"></button>
+      <label for="keybtn2">Close mini window hotkey</label>
+      <button class="btn" id="keybtn2"></button>
+      <label>AI source</label>
+      <div class="seg" role="group" aria-label="AI source">
+        <button type="button" id="modePuter">Puter (free)</button>
+        <button type="button" id="modeKey">My API key</button>
+      </div>
+      <p id="modeNote" style="margin:8px 0 0"></p>
+      <div id="keyFields" hidden>
+        <label for="provider">Provider</label>
+        <select id="provider"></select>
+        <div id="baseWrap" hidden>
+          <label for="base">Base URL (OpenAI-compatible)</label>
+          <input type="text" id="base" placeholder="https://your-host/v1" spellcheck="false">
+        </div>
+        <label for="apikey">API key</label>
+        <input type="password" id="apikey" autocomplete="off" spellcheck="false" placeholder="Paste your key">
+        <label class="check"><input type="checkbox" id="remember"> Remember key on this device</label>
+      </div>
+      <label for="model">Model</label>
+      <input type="text" id="model" spellcheck="false" placeholder="Model name">
+      <label for="style">Answer style</label>
+      <textarea id="style"></textarea>
+      <label for="voice">AI voice (live mode)</label>
+      <div class="row" style="flex-wrap:nowrap"><select id="voice">
+        <option value="alloy">Alloy</option><option value="nova">Nova</option><option value="shimmer">Shimmer</option>
+        <option value="echo">Echo</option><option value="onyx">Onyx</option><option value="fable">Fable</option>
+        <option value="browser">Browser voice (offline)</option></select>
+        <button class="btn" id="testVoice" type="button">Test</button></div>
+      <label class="check" style="margin-top:10px"><input type="checkbox" id="deep"> Double-check answers (slower, more accurate)</label>
+    <div class="dz">
+      <h3>Danger zone</h3>
+      <p>Permanently deletes your whole conversation with Glance. This cannot be undone.</p>
+      <button class="btn danger" id="forgetBtn" type="button">Forget everything</button>
+    </div>
+  </div>
+</aside>
 
 <aside id="viewer" hidden aria-label="File viewer">
   <div class="vwhead">
@@ -1246,6 +1264,10 @@ chat.addEventListener('drop',e=>{e.preventDefault();chat.classList.remove('drag'
 window.addEventListener('dragover',e=>e.preventDefault());
 window.addEventListener('drop',e=>e.preventDefault());
 $('#prevClose').onclick=()=>$('#prevDlg').close();
+const openSettings=()=>{$('#settingsPanel').hidden=false;$('#setScrim').hidden=false};
+const closeSettings=()=>{$('#settingsPanel').hidden=true;$('#setScrim').hidden=true;if(recording){recording=false;ui()}};
+$('#setBtn').onclick=openSettings;$('#setClose').onclick=closeSettings;$('#setScrim').onclick=closeSettings;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#settingsPanel').hidden&&!recording&&!liveMode&&!$('#forgetDlg').open)closeSettings()});
 $('#vwPv').onclick=()=>{vw.mode='preview';renderViewer()};
 $('#vwCd').onclick=()=>{vw.mode='code';renderViewer()};
 $('#vwCopy').onclick=e=>copyText(vw.code,e.currentTarget);
