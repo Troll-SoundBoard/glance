@@ -687,7 +687,16 @@ function setLive(st){
 function stopListening(){try{rec&&rec.abort()}catch(e){}rec=null}
 function stopSpeaking(){speakToken++;if(audio){try{audio.pause()}catch(e){}audio=null}try{speechSynthesis.cancel()}catch(e){}}
 function cleanForSpeech(t){return t.replace(/```[\s\S]*?(```|$)/g,' The code is shown on screen. ').replace(/`([^`]*)`/g,'$1').replace(/\*\*([^*]*)\*\*/g,'$1').replace(/https?:\/\/\S+/g,'link').replace(/[#>*_]/g,' ').replace(/\s+/g,' ').trim()}
-function chunks(t){const out=[];let cur='';for(const s of (t.match(/[^.!?]+[.!?]*\s*/g)||[t])){if(cur&&(cur+s).length>700){out.push(cur);cur=s}else cur+=s}if(cur.trim())out.push(cur);return out}
+function chunks(t){
+  const ss=(t.match(/[^.!?]+[.!?]*\s*/g)||[t]).map(x=>x.trim()).filter(Boolean);
+  if(!ss.length)return[t];
+  const f=ss[0];
+  if(f.length>200){const k=Math.max(f.lastIndexOf(',',200),f.lastIndexOf(' ',200));if(k>40)ss.splice(0,1,f.slice(0,k+1),f.slice(k+1).trim())}
+  const out=[ss[0]];let cur='';
+  for(let i=1;i<ss.length;i++){if(cur&&(cur+' '+ss[i]).length>400){out.push(cur);cur=ss[i]}else cur=cur?cur+' '+ss[i]:ss[i]}
+  if(cur)out.push(cur);
+  return out;
+}
 async function ttsAudio(text){
   const v=S.voice;if(v==='browser')return null;
   if(S.mode==='puter'){
@@ -720,7 +729,7 @@ async function speak(t){
   }catch(e){}
   if(my===speakToken){audio=null;liveNext()}
 }
-function liveNext(){if(liveMode)setTimeout(listen,250)}
+function liveNext(){if(liveMode)setTimeout(listen,80)}
 let heardVoice=false;
 function listen(){
   if(!liveMode)return;
@@ -728,15 +737,16 @@ function listen(){
   if(vmuted){setLive('muted');return}
   setLive('listening');heardVoice=false;
   const r=new SR();rec=r;r.lang=navigator.language||'en-US';r.interimResults=true;r.continuous=false;
-  let fin='',conf=1;
-  r.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal){fin+=e.results[i][0].transcript;conf=Math.min(conf,e.results[i][0].confidence||1)}}};
+  let fin='',conf=1,txt='',st=null;
+  r.onresult=e=>{txt='';fin='';for(let i=0;i<e.results.length;i++){txt+=e.results[i][0].transcript;if(e.results[i].isFinal){fin+=e.results[i][0].transcript;conf=Math.min(conf,e.results[i][0].confidence||1)}}clearTimeout(st);if(txt.trim())st=setTimeout(()=>{try{r.stop()}catch(x){}},800)};
   r.onerror=e=>{
     if(e.error==='not-allowed'||e.error==='service-not-allowed'){toast('Microphone blocked. Allow it from the icon in the address bar, then try again.');endLive()}
     else if(e.error==='network'){toast('Speech recognition needs an internet connection.');endLive()}
   };
   r.onend=()=>{
+    clearTimeout(st);
     if(!liveMode||liveState!=='listening'||rec!==r)return;
-    const t=fin.trim();
+    const t=(fin||txt).trim();
     if(t&&(heardVoice||conf>=.6))handleLive(t);else setTimeout(listen,300);
   };
   try{r.start()}catch(e){setTimeout(listen,500)}
