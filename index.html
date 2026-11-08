@@ -89,6 +89,28 @@ kbd{font:500 12.5px "IBM Plex Sans",monospace;padding:2px 7px;border:1px solid v
 .fact .btn{padding:5px 12px;font-size:13px}
 .fcard .code{border:0;border-top:1px solid var(--line);border-radius:0}
 .msg .txt+.fcard,.msg .fcard+.txt,.msg .fcard+.fcard,.msg .code+.fcard,.msg .fcard+.code{margin-top:10px}
+.frow{cursor:pointer}.fcard:hover{border-color:var(--muted)}
+#viewer{position:fixed;top:0;right:0;bottom:0;width:min(580px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:15;display:flex;flex-direction:column;box-shadow:-8px 0 24px rgba(0,0,0,.18)}
+#viewer.wide{width:100%}
+.vwhead{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.vwseg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-shrink:0}
+.vwseg button{border:0;background:var(--bg);color:var(--muted);padding:6px 9px;cursor:pointer;display:grid;place-items:center}
+.vwseg button.active{background:var(--accent);color:var(--accent-ink)}
+.vwseg svg{width:16px;height:16px}
+.vwtitle{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.vwtitle span{color:var(--muted);margin-left:6px;font-size:13px;font-weight:400}
+.vwhead .btn{padding:5px 11px;font-size:13px;flex-shrink:0}
+#vwBody{flex:1;min-height:0;overflow:auto;background:var(--bg)}
+#vwBody iframe{width:100%;height:100%;border:0;background:#fff;display:block}
+.vwcode{margin:0;padding:12px 0;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre;counter-reset:l;min-width:max-content;color:var(--ink)}
+.vwcode .l{display:block;padding-right:16px}
+.vwcode .l::before{counter-increment:l;content:counter(l);display:inline-block;width:3.2em;margin-right:14px;text-align:right;color:var(--muted)}
+.vwdoc{padding:24px 28px;background:var(--surface);min-height:100%}
+.vwdoc h1{font-size:24px;margin:.2em 0 .5em}.vwdoc h2{font-size:19px;margin:1em 0 .4em}.vwdoc h3{font-size:16px;margin:1em 0 .3em}.vwdoc p{margin:.5em 0}
+.vwdoc .li{display:flex;gap:8px;margin:.25em 0 .25em 8px}
+.vwtab{border-collapse:collapse;font-size:13.5px}.vwtab td{border:1px solid var(--line);padding:5px 10px;white-space:nowrap}.vwtab tr:first-child td{font-weight:600;background:var(--bg)}
+.vwmsg{padding:24px;color:var(--muted)}
+@media (min-width:1200px){body.vopen{padding-right:580px}}
 .typing{display:inline-flex;gap:4px;vertical-align:middle}
 .typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:b 1s infinite}
 .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
@@ -281,6 +303,21 @@ video#video{display:none}
   <iframe id="prevFrame" title="Preview" sandbox="allow-scripts allow-forms allow-modals" style="width:100%;height:70vh;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe>
 </dialog>
 
+<aside id="viewer" hidden aria-label="File viewer">
+  <div class="vwhead">
+    <div class="vwseg" id="vwSeg">
+      <button type="button" id="vwPv" title="Preview" aria-label="Preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      <button type="button" id="vwCd" title="Code" aria-label="Code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg></button>
+    </div>
+    <div class="vwtitle"><span id="vwName" style="margin:0;color:var(--ink);font-size:inherit;font-weight:600"></span><span id="vwType"></span></div>
+    <button class="btn" id="vwCopy" type="button">Copy</button>
+    <button class="btn primary" id="vwDl" type="button">Download</button>
+    <button class="btn" id="vwExp" type="button" title="Expand" aria-label="Expand">⤢</button>
+    <button class="btn" id="vwClose" type="button" aria-label="Close">✕</button>
+  </div>
+  <div id="vwBody"></div>
+</aside>
+
 <video id="video" muted playsinline></video>
 <div id="toast" role="status"></div>
 
@@ -456,21 +493,94 @@ function fileCard(info,code){
   const {lang,name}=parseInfo(info),fe=(name.split('.').pop()||'').toLowerCase(),ext=fe||EXT[lang]||'txt';
   const kind={pdf:'Document',docx:'Document',md:'Document',txt:'Document',xlsx:'Spreadsheet',csv:'Spreadsheet',svg:'Image'}[ext]||'Code';
   const w=document.createElement('div');w.className='fcard';
-  const row=document.createElement('div');row.className='frow';
+  const row=document.createElement('div');row.className='frow';row.tabIndex=0;row.setAttribute('role','button');row.setAttribute('aria-label','Open '+name);
   const ic=document.createElement('div');ic.className='fico '+ext;ic.textContent=ext.slice(0,4);
-  const meta=document.createElement('div');meta.className='fmeta';meta.title='Show or hide the content';
+  const meta=document.createElement('div');meta.className='fmeta';
   const nm=document.createElement('b');nm.textContent=name;
   const sm=document.createElement('small');sm.textContent=kind+' · '+ext.toUpperCase();
   meta.append(nm,sm);
-  const view=codeBlock(info,code);view.hidden=true;
   const act=document.createElement('div');act.className='fact';
-  if(ext==='html'||ext==='svg')act.appendChild(mkBtn('Preview',()=>preview(code,ext)));
-  const vb=mkBtn('View',b=>{view.hidden=!view.hidden;b.textContent=view.hidden?'View':'Hide'});
-  meta.onclick=()=>vb.click();
-  act.appendChild(vb);
   const dl=mkBtn('Download',async b=>{const o=b.textContent;b.textContent='Building…';try{saveBlob(await fileBlob(name,code,ext),name)}catch(x){toast('Could not build the file: '+x.message)}b.textContent=o});
   dl.classList.add('primary');act.appendChild(dl);
-  row.append(ic,meta,act);w.append(row,view);return w;
+  row.onclick=e=>{if(!e.target.closest('.fact'))openViewer(name,code,ext)};
+  row.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target===row){e.preventDefault();openViewer(name,code,ext)}};
+  row.append(ic,meta,act);w.appendChild(row);return w;
+}
+/* ---------- file viewer side panel ---------- */
+let vw={url:'',tok:0,name:'',code:'',ext:'',mode:'preview'};
+const PV=['html','svg','pdf','docx','xlsx','csv','md','json'];
+function openViewer(name,code,ext){
+  vw.name=name;vw.code=code;vw.ext=ext;vw.mode=PV.includes(ext)?'preview':'code';
+  $('#viewer').hidden=false;document.body.classList.add('vopen');renderViewer();
+}
+function closeViewer(){
+  if(vw.url){URL.revokeObjectURL(vw.url);vw.url=''}
+  vw.tok++;$('#viewer').hidden=true;$('#viewer').classList.remove('wide');document.body.classList.remove('vopen');$('#vwBody').textContent='';
+}
+function codeView(t){
+  const p=document.createElement('pre');p.className='vwcode';
+  t.split('\n').slice(0,20000).forEach(l=>{const s=document.createElement('span');s.className='l';s.textContent=l||' ';p.appendChild(s)});
+  return p;
+}
+function inl(t,p){
+  plain(t).split(/(\*\*[^*]+\*\*)/).forEach(x=>{
+    if(!x)return;
+    if(x.length>4&&x.startsWith('**')&&x.endsWith('**')){const b=document.createElement('strong');b.textContent=x.slice(2,-2);p.appendChild(b)}
+    else p.appendChild(document.createTextNode(x));
+  });
+}
+function docView(md){
+  const d=document.createElement('div');d.className='vwdoc';
+  for(const b of mdBlocks(md)){
+    if(b.t==='li'){const e=document.createElement('div');e.className='li';const m=document.createElement('span');m.textContent=b.mark;const s=document.createElement('span');inl(b.text,s);e.append(m,s);d.appendChild(e);continue}
+    const e=document.createElement(b.t[0]==='h'?b.t:'p');inl(b.text,e);d.appendChild(e);
+  }
+  if(!d.childNodes.length)d.textContent='(empty)';
+  return d;
+}
+function parseCSV(t){
+  const rows=[];let r=[],c='',q=false;
+  for(let i=0;i<t.length;i++){
+    const ch=t[i];
+    if(q){if(ch==='"'){if(t[i+1]==='"'){c+='"';i++}else q=false}else c+=ch}
+    else if(ch==='"')q=true;
+    else if(ch===','){r.push(c);c=''}
+    else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;r.push(c);c='';rows.push(r);r=[]}
+    else c+=ch;
+  }
+  if(c!==''||r.length){r.push(c);rows.push(r)}
+  return rows;
+}
+function tableView(t){
+  const rows=t.split('\n').map(l=>l.trim()).filter(l=>l.startsWith('|'));
+  const aoa=rows.length>=2?rows.filter(l=>!/^\|[\s:|-]+\|?$/.test(l)).map(l=>l.replace(/^\||\|$/g,'').split('|').map(c=>c.trim())):parseCSV(t);
+  const w=document.createElement('div');w.style.cssText='padding:12px;background:var(--surface);min-height:100%';
+  const tb=document.createElement('table');tb.className='vwtab';
+  aoa.slice(0,2000).forEach(r=>{const tr=document.createElement('tr');r.forEach(c=>{const td=document.createElement('td');td.textContent=c;tr.appendChild(td)});tb.appendChild(tr)});
+  w.appendChild(tb);return w;
+}
+async function renderViewer(){
+  const body=$('#vwBody'),tok=++vw.tok,e=vw.ext,can=PV.includes(e);
+  $('#vwName').textContent=vw.name;$('#vwType').textContent=e.toUpperCase();
+  $('#vwSeg').hidden=!can;
+  $('#vwPv').classList.toggle('active',vw.mode==='preview');$('#vwCd').classList.toggle('active',vw.mode==='code');
+  if(vw.url){URL.revokeObjectURL(vw.url);vw.url=''}
+  body.textContent='';
+  if(vw.mode==='code'||!can){body.appendChild(codeView(vw.code));return}
+  if(e==='html'||e==='svg'){
+    const f=document.createElement('iframe');f.setAttribute('sandbox','allow-scripts allow-forms allow-modals');f.title='Preview';
+    f.srcdoc=e==='svg'?'<!doctype html><body style="margin:0;display:grid;place-items:center;min-height:100vh">'+vw.code+'</body>':vw.code;
+    body.appendChild(f);return;
+  }
+  if(e==='pdf'){
+    const m=document.createElement('div');m.className='vwmsg';m.textContent='Building PDF…';body.appendChild(m);
+    try{const b=await mkPdf(vw.code);if(tok!==vw.tok)return;vw.url=URL.createObjectURL(b);body.textContent='';const f=document.createElement('iframe');f.title='PDF preview';f.src=vw.url;body.appendChild(f)}
+    catch(x){if(tok===vw.tok)m.textContent='Could not build the preview: '+x.message}
+    return;
+  }
+  if(e==='csv'||e==='xlsx'){body.appendChild(tableView(vw.code));return}
+  if(e==='json'){let t=vw.code;try{t=JSON.stringify(JSON.parse(t),null,2)}catch(x){}body.appendChild(codeView(t));return}
+  body.appendChild(docView(vw.code));
 }
 function textBlock(s){
   s=s.replace(/^\n+|\n+$/g,'');if(!s.trim())return null;
@@ -488,7 +598,7 @@ function renderRich(el,text){
   const re=/```([^\n]*)\n([\s\S]*?)(```|$)/g;let last=0,m,t;const files=[];
   while((m=re.exec(text))){
     if(m.index>last&&(t=textBlock(text.slice(last,m.index))))el.appendChild(t);
-    {const c=m[2].replace(/\n$/,''),pi=parseInfo(m[1]);el.appendChild(pi.name?fileCard(m[1],c):codeBlock(m[1],c));if(pi.name&&m[3]==='```')files.push({name:pi.name,code:c})}
+    {const c=m[2].replace(/\n$/,''),pi=parseInfo(m[1]),big=!pi.name&&EXT[pi.lang]&&!['console','text','txt'].includes(pi.lang)&&c.split('\n').length>=12;el.appendChild(pi.name||big?fileCard(big?pi.lang+' file.'+EXT[pi.lang]:m[1],c):codeBlock(m[1],c));if(pi.name&&m[3]==='```')files.push({name:pi.name,code:c})}
     last=re.lastIndex;if(m[0].length===0)re.lastIndex++;
   }
   if(last<text.length&&(t=textBlock(text.slice(last))))el.appendChild(t);
@@ -1136,6 +1246,13 @@ chat.addEventListener('drop',e=>{e.preventDefault();chat.classList.remove('drag'
 window.addEventListener('dragover',e=>e.preventDefault());
 window.addEventListener('drop',e=>e.preventDefault());
 $('#prevClose').onclick=()=>$('#prevDlg').close();
+$('#vwPv').onclick=()=>{vw.mode='preview';renderViewer()};
+$('#vwCd').onclick=()=>{vw.mode='code';renderViewer()};
+$('#vwCopy').onclick=e=>copyText(vw.code,e.currentTarget);
+$('#vwDl').onclick=async e=>{const b=e.currentTarget,o=b.textContent;b.textContent='Building…';try{saveBlob(await fileBlob(vw.name,vw.code,vw.ext),vw.name)}catch(x){toast('Could not build the file: '+x.message)}b.textContent=o};
+$('#vwExp').onclick=()=>$('#viewer').classList.toggle('wide');
+$('#vwClose').onclick=closeViewer;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#viewer').hidden&&!liveMode&&!$('#prevDlg').open)closeViewer()});
 $('#prevDlg').addEventListener('close',()=>{$('#prevFrame').srcdoc=''});
 $('#forgetBtn').onclick=()=>{$('#alsoSettings').checked=false;$('#forgetDlg').showModal()};
 $('#forgetNo').onclick=()=>$('#forgetDlg').close();
