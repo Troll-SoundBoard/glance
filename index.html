@@ -34,7 +34,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;pa
 .pill{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--line);border-radius:999px;font-size:13px;color:var(--muted)}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .pill.on{color:var(--ok);border-color:currentColor}.pill.on .dot{background:var(--ok)}
-main{flex:1;min-height:0;display:grid;grid-template-columns:340px 1fr;gap:20px;padding:20px 24px;max-width:1200px;width:100%;margin:0 auto}
+main{flex:1;min-height:0;display:grid;grid-template-columns:250px minmax(0,1fr) 320px;gap:20px;padding:20px 24px;max-width:1500px;width:100%;margin:0 auto}
+main>aside{min-height:0}
 aside{display:flex;flex-direction:column;gap:14px;overflow:auto}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
 .card h2{margin:0 0 4px;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
@@ -111,8 +112,22 @@ kbd{font:500 12.5px "IBM Plex Sans",monospace;padding:2px 7px;border:1px solid v
 .vwtab{border-collapse:collapse;font-size:13.5px}.vwtab td{border:1px solid var(--line);padding:5px 10px;white-space:nowrap}.vwtab tr:first-child td{font-weight:600;background:var(--bg)}
 .vwmsg{padding:24px;color:var(--muted)}
 @media (min-width:1200px){body.vopen{padding-right:580px}}
-#setScrim{position:fixed;inset:0;z-index:16;background:rgba(0,0,0,.35)}
-#settingsPanel{position:fixed;top:0;left:0;bottom:0;width:min(400px,100%);background:var(--surface);border-right:1px solid var(--line);z-index:17;display:flex;flex-direction:column;box-shadow:8px 0 24px rgba(0,0,0,.18)}
+#chats{display:flex;flex-direction:column;gap:10px;min-height:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px;overflow:hidden}
+#chatList{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.citem{display:flex;align-items:center;gap:2px;border-radius:8px}
+.citem:hover,.citem.active{background:var(--accent-soft)}
+.citem .t{flex:1;min-width:0;text-align:left;border:0;background:none;padding:8px 10px;border-radius:8px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.citem.active .t{font-weight:600}
+.citem .x{border:0;background:none;color:var(--muted);cursor:pointer;opacity:0;padding:4px 9px;font-size:14px}
+.citem:hover .x,.citem:focus-within .x{opacity:1}
+@media (hover:none){.citem .x{opacity:1}}
+.cempty{color:var(--muted);font-size:13.5px;padding:8px 10px}
+#chatScrim{display:none;position:fixed;inset:0;z-index:13;background:rgba(0,0,0,.35)}
+#setScrim{position:fixed;inset:0;z-index:16;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .28s ease}
+#setScrim.open{opacity:1;pointer-events:auto}
+#settingsPanel{position:fixed;top:0;right:0;bottom:0;width:min(400px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:17;display:flex;flex-direction:column;box-shadow:-8px 0 24px rgba(0,0,0,.18);transform:translateX(100%);visibility:hidden;transition:transform .28s ease,visibility 0s linear .28s}
+#settingsPanel.open{transform:none;visibility:visible;transition:transform .28s ease,visibility 0s}
+@media (prefers-reduced-motion:reduce){#settingsPanel,#setScrim,#chats{transition:none}}
 .setbody{flex:1;overflow:auto;padding:4px 16px 24px}
 .setbody>label:first-child{margin-top:8px}
 .setbody p{margin:0 0 12px;color:var(--muted);font-size:13.5px}
@@ -178,44 +193,39 @@ dialog h3{margin:0 0 8px;font-size:18px}dialog p{margin:0 0 10px;color:var(--mut
 .check{display:flex!important;align-items:center;gap:8px;font-weight:400!important}
 .check input{width:auto}
 video#video{display:none}
-@media (max-width:860px){
-  body{height:auto}main{grid-template-columns:1fr;padding:14px}.chat{min-height:520px}header{padding:12px 14px}.brand small{display:none}
+@media (min-width:1001px){
+  body.nochats main{grid-template-columns:minmax(0,1fr) 320px}
+  body.nochats #chats{display:none}
+  body.vopen main{grid-template-columns:250px minmax(0,1fr)}
+  body.vopen.nochats main{grid-template-columns:minmax(0,1fr)}
+  body.vopen #rightPanel{display:none}
 }
+@media (max-width:1000px){
+  body{height:auto}main{grid-template-columns:1fr;padding:14px}.chat{min-height:520px}
+  #chats{position:fixed;top:0;left:0;bottom:0;width:280px;z-index:14;border-radius:0;transform:translateX(-100%);transition:transform .25s ease;visibility:hidden}
+  body.chatsopen #chats{transform:none;visibility:visible}
+  body.chatsopen #chatScrim{display:block}
+}
+@media (max-width:860px){header{padding:12px 14px}.brand small{display:none}}
 @media (prefers-reduced-motion:reduce){.typing i{animation:none;opacity:.6}.live-dot{animation:none}#toast{transition:none}}
 </style>
 </head>
 <body>
 <header>
   <div class="brand">
+    <button class="btn" id="chatsToggle" type="button" style="padding:6px 8px" aria-label="Show or hide chats" title="Chats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:18px;height:18px;color:currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10.5" r="2.5"/></svg>
     Glance<small>Answers from your screen and your files</small>
   </div>
   <span class="pill" id="status"><span class="dot"></span><span id="statusText">Screen not shared</span></span>
 </header>
 
+<div id="chatScrim"></div>
 <main>
-  <aside>
-    <section class="card">
-      <h2>Share your screen <span class="tick" id="tickScreen">Not shared</span></h2>
-      <p>Choose a window, tab, or your whole screen. Frames are only captured when you press the hotkey.</p>
-      <div class="row">
-        <button class="btn primary" id="shareBtn">Share screen</button>
-        <button class="btn" id="stopBtn" disabled>Stop</button>
-      </div>
-      <div class="row" style="margin-top:8px">
-        <button class="btn" id="captureBtn" disabled>Capture now</button>
-        <button class="btn" id="pipBtn" title="Opens a small always-on-top window with a capture button">Mini window</button>
-      </div>
-
-    </section>
-
-    <section class="card">
-      <h2>Notifications <span class="tick" id="tickNotif">Off</span></h2>
-      <p>Get each answer as a desktop notification. Click it to open the full chat.</p>
-      <div class="row"><button class="btn" id="notifBtn">Allow notifications</button><button class="btn" id="testBtn">Send test</button></div>
-      <p id="notifHelp" style="margin:10px 0 0"></p>
-    </section>
-
+  <aside id="chats" aria-label="Chats">
+    <button class="btn primary block" id="newChat" type="button">+ New chat</button>
+    <input type="text" id="chatSearch" placeholder="Search chats" autocomplete="off" aria-label="Search chats">
+    <div id="chatList"></div>
   </aside>
 
   <section class="chat" id="chat" aria-label="Conversation">
@@ -242,6 +252,29 @@ video#video{display:none}
       <button class="btn primary" id="sendBtn" type="submit">Send</button>
     </form>
   </section>
+  <aside id="rightPanel">
+    <section class="card">
+      <h2>Share your screen <span class="tick" id="tickScreen">Not shared</span></h2>
+      <p>Choose a window, tab, or your whole screen. Frames are only captured when you press the hotkey.</p>
+      <div class="row">
+        <button class="btn primary" id="shareBtn">Share screen</button>
+        <button class="btn" id="stopBtn" disabled>Stop</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="captureBtn" disabled>Capture now</button>
+        <button class="btn" id="pipBtn" title="Opens a small always-on-top window with a capture button">Mini window</button>
+      </div>
+
+    </section>
+
+    <section class="card">
+      <h2>Notifications <span class="tick" id="tickNotif">Off</span></h2>
+      <p>Get each answer as a desktop notification. Click it to open the full chat.</p>
+      <div class="row"><button class="btn" id="notifBtn">Allow notifications</button><button class="btn" id="testBtn">Send test</button></div>
+      <p id="notifHelp" style="margin:10px 0 0"></p>
+    </section>
+
+  </aside>
 </main>
 
 <div id="vo" hidden role="dialog" aria-label="Live voice conversation">
@@ -264,7 +297,7 @@ video#video{display:none}
 
 <dialog id="forgetDlg" aria-labelledby="fdTitle">
   <h3 id="fdTitle">Forget everything?</h3>
-  <p><strong>This permanently deletes your whole conversation with Glance.</strong> Every message and answer disappears from the chat and the mini window, and Glance will no longer remember anything you discussed or captured. This cannot be undone.</p>
+  <p><strong>This permanently deletes all your chats with Glance.</strong> Every message and answer disappears from the chat list and the mini window, and Glance will no longer remember anything you discussed or captured. This cannot be undone.</p>
   <p>Your hotkeys, provider, model and API key are kept unless you tick the box below.</p>
   <label class="check" style="margin:12px 0 18px"><input type="checkbox" id="alsoSettings"> Also reset my settings and delete my saved API key</label>
   <div class="row" style="justify-content:flex-end"><button class="btn" id="forgetNo">Cancel</button><button class="btn danger" id="forgetYes">Forget everything</button></div>
@@ -275,8 +308,8 @@ video#video{display:none}
   <iframe id="prevFrame" title="Preview" sandbox="allow-scripts allow-forms allow-modals" style="width:100%;height:70vh;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe>
 </dialog>
 
-<div id="setScrim" hidden></div>
-<aside id="settingsPanel" hidden aria-label="Settings">
+<div id="setScrim"></div>
+<aside id="settingsPanel" aria-label="Settings">
   <div class="vwhead"><div class="vwtitle">Settings</div><button class="btn" id="setClose" type="button" aria-label="Close settings">✕</button></div>
   <div class="setbody">
       <label>Appearance</label>
@@ -315,7 +348,7 @@ video#video{display:none}
       <label class="check" style="margin-top:10px"><input type="checkbox" id="deep"> Double-check answers (slower, more accurate)</label>
     <div class="dz">
       <h3>Danger zone</h3>
-      <p>Permanently deletes your whole conversation with Glance. This cannot be undone.</p>
+      <p>Permanently deletes all your chats with Glance. This cannot be undone.</p>
       <button class="btn danger" id="forgetBtn" type="button">Forget everything</button>
     </div>
   </div>
@@ -422,11 +455,76 @@ const DEEP=' Think carefully and double-check your answer before replying.';
 const CHAT_SYS='You are Glance, a helpful assistant that remembers the whole conversation with the user. Sometimes they capture their screen (shown as [Screen captured] followed by your answer), sometimes they attach files (their extracted text, transcripts, or images appear in the message), and sometimes they just talk to you. Answer directly and concisely. When they ask you to change an earlier answer, reply with only the revised answer.'+FMT;
 const EMPTY='<div class="empty" id="empty"><strong>No messages yet</strong>Type a message, attach files with the paperclip (or drag them in), or share your screen and press <kbd class="hk"></kbd> to ask about it.</div>';
 let beepCtx,lastPip='';
-function saveHist(){let t=0;while(t++<20){try{localStorage.setItem('hist',JSON.stringify(history));return}catch(e){if(history.length<=40)return;history.splice(0,20)}}}
+function saveHist(){const c=curChat();c.hist=history;c.ts=Date.now();if(!c.title){const u=history.find(x=>x.role==='user');if(u)c.title=titleOf(u)}persist();renderChats()}
+function titleOf(u){return u.content==='[Screen captured]'?'Screen capture':(u.label||u.content).replace(/\s+/g,' ').trim().slice(0,42)||'New chat'}
+function curChat(){return chats.find(x=>x.id===curId)||chats[0]}
+function persist(){let t=0;while(t++<30){try{localStorage.setItem('chats',JSON.stringify(chats));localStorage.setItem('curchat',JSON.stringify(curId));return}catch(e){const c=curChat();if(c.hist.length>40){c.hist.splice(0,20);continue}const o=chats.filter(x=>x.id!==curId).sort((p,q)=>p.ts-q.ts)[0];if(!o)return;chats.splice(chats.indexOf(o),1)}}}
 function ctx(){let n=0,i=history.length;while(i>0&&n+history[i-1].content.length<=60000){n+=history[i-1].content.length;i--}const m=history.slice(i);while(m.length&&m[0].role!=='user')m.shift();return m.map(x=>({role:x.role,content:x.content}))}
-let stream=null,busy=false,recording=false,history=store.get('hist',[]),pip=null,pendingPip=false,toastT,pending=[];
+let stream=null,busy=false,recording=false,history=[],pip=null,pendingPip=false,toastT,pending=[];
 
 const video=$('#video'),log=$('#log');
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+let chats=store.get('chats',null),curId=store.get('curchat','');
+if(!Array.isArray(chats)||!chats.length){
+  const old=store.get('hist',[]);
+  chats=[{id:uid(),title:'',ts:Date.now(),hist:Array.isArray(old)?old:[]}];curId=chats[0].id;
+  const u=chats[0].hist.find(x=>x.role==='user');if(u)chats[0].title=titleOf(u);
+  persist();try{localStorage.removeItem('hist')}catch(e){}
+}
+chats.forEach(c=>{if(!Array.isArray(c.hist))c.hist=[]});
+if(!chats.find(x=>x.id===curId))curId=chats[0].id;
+history=curChat().hist;
+const BUSYMSG='Wait for the current answer to finish first.';
+function renderLog(){
+  log.innerHTML=EMPTY;
+  history.forEach(x=>add(x.role==='user'?'user':'ai',x.content==='[Screen captured]'?'Screen captured':(x.label||x.content)));
+  const la=history.slice().reverse().find(x=>x.role==='assistant');lastPip=la?la.content:'';
+  document.querySelectorAll('.hk').forEach(k=>k.textContent=S.hotkey);
+  if(pip&&!pip.closed)pipShow(lastPip);
+}
+function renderChats(){
+  const q=($('#chatSearch').value||'').toLowerCase(),l=$('#chatList');l.textContent='';
+  const list=chats.slice().sort((a,b)=>b.ts-a.ts).filter(c=>!q||(c.title||'new chat').toLowerCase().includes(q));
+  if(!list.length){const e=document.createElement('div');e.className='cempty';e.textContent=q?'No chats found.':'No chats yet.';l.appendChild(e);return}
+  list.forEach(c=>{
+    const d=document.createElement('div');d.className='citem'+(c.id===curId?' active':'');
+    const t=document.createElement('button');t.type='button';t.className='t';t.textContent=c.title||'New chat';t.title=(c.title||'New chat')+' (double-click to rename)';
+    t.onclick=()=>switchChat(c.id);t.ondblclick=()=>renameChat(c.id);
+    const x=document.createElement('button');x.type='button';x.className='x';x.textContent='✕';x.setAttribute('aria-label','Delete chat');x.title='Delete chat';x.onclick=e=>{e.stopPropagation();deleteChat(c.id)};
+    d.append(t,x);l.appendChild(d);
+  });
+}
+const closeChatsDrawer=()=>document.body.classList.remove('chatsopen');
+function switchChat(id){
+  if(id===curId){closeChatsDrawer();return}
+  if(busy){toast(BUSYMSG);return}
+  const c=chats.find(x=>x.id===id);if(!c)return;
+  curId=id;history=c.hist;persist();renderLog();renderChats();ui();closeChatsDrawer();
+}
+function newChat(){
+  if(busy){toast(BUSYMSG);return}
+  if(!history.length){closeChatsDrawer();$('#input').focus();return}
+  const c={id:uid(),title:'',ts:Date.now(),hist:[]};
+  chats.push(c);curId=c.id;history=c.hist;persist();renderLog();renderChats();ui();closeChatsDrawer();$('#input').focus();
+}
+function renameChat(id){
+  const c=chats.find(x=>x.id===id);if(!c)return;
+  const n=prompt('Rename chat',c.title||'');
+  if(n!==null){c.title=n.trim().slice(0,60)||c.title;persist();renderChats()}
+}
+function deleteChat(id){
+  const c=chats.find(x=>x.id===id);if(!c)return;
+  if(id===curId&&busy){toast(BUSYMSG);return}
+  if(!confirm('Delete "'+(c.title||'New chat')+'"? This cannot be undone.'))return;
+  chats.splice(chats.indexOf(c),1);
+  if(!chats.length)chats.push({id:uid(),title:'',ts:Date.now(),hist:[]});
+  if(id===curId){const n=chats.slice().sort((a,b)=>b.ts-a.ts)[0];curId=n.id;history=n.hist;renderLog();ui()}
+  persist();renderChats();
+}
+function forgetAll(){
+  const c={id:uid(),title:'',ts:Date.now(),hist:[]};
+  chats=[c];curId=c.id;history=c.hist;persist();pipShow('');renderLog();renderChats();ui();
+}
 
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3500)}
 function parse(s){const p=s.split('+').map(x=>x.trim().toLowerCase());return{ctrl:p.includes('ctrl'),alt:p.includes('alt'),shift:p.includes('shift'),meta:p.includes('meta'),key:p[p.length-1]}}
@@ -1264,10 +1362,15 @@ chat.addEventListener('drop',e=>{e.preventDefault();chat.classList.remove('drag'
 window.addEventListener('dragover',e=>e.preventDefault());
 window.addEventListener('drop',e=>e.preventDefault());
 $('#prevClose').onclick=()=>$('#prevDlg').close();
-const openSettings=()=>{$('#settingsPanel').hidden=false;$('#setScrim').hidden=false};
-const closeSettings=()=>{$('#settingsPanel').hidden=true;$('#setScrim').hidden=true;if(recording){recording=false;ui()}};
+const openSettings=()=>{$('#settingsPanel').classList.add('open');$('#setScrim').classList.add('open')};
+const closeSettings=()=>{$('#settingsPanel').classList.remove('open');$('#setScrim').classList.remove('open');if(recording){recording=false;ui()}};
+$('#newChat').onclick=newChat;
+$('#chatSearch').oninput=renderChats;
+document.body.classList.toggle('nochats',!!store.get('nochats',false));
+$('#chatsToggle').onclick=()=>{if(matchMedia('(max-width:1000px)').matches)document.body.classList.toggle('chatsopen');else{const v=document.body.classList.toggle('nochats');store.set('nochats',v)}};
+$('#chatScrim').onclick=closeChatsDrawer;
 $('#setBtn').onclick=openSettings;$('#setClose').onclick=closeSettings;$('#setScrim').onclick=closeSettings;
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#settingsPanel').hidden&&!recording&&!liveMode&&!$('#forgetDlg').open)closeSettings()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#settingsPanel').classList.contains('open')&&!recording&&!liveMode&&!$('#forgetDlg').open)closeSettings()});
 $('#vwPv').onclick=()=>{vw.mode='preview';renderViewer()};
 $('#vwCd').onclick=()=>{vw.mode='code';renderViewer()};
 $('#vwCopy').onclick=e=>copyText(vw.code,e.currentTarget);
@@ -1281,12 +1384,9 @@ $('#forgetNo').onclick=()=>$('#forgetDlg').close();
 $('#forgetYes').onclick=()=>{
   $('#forgetDlg').close();
   if($('#alsoSettings').checked){try{localStorage.clear()}catch(e){}location.reload();return}
-  history=[];saveHist();pipShow('');log.innerHTML=EMPTY;ui();toast('Glance has forgotten the conversation.');
+  if(busy){toast(BUSYMSG);return}forgetAll();toast('Glance has forgotten all your chats.');
 };
-if(!Array.isArray(history))history=[];
-log.innerHTML=EMPTY;
-history.forEach(x=>add(x.role==='user'?'user':'ai',x.content==='[Screen captured]'?'Screen captured':(x.label||x.content)));
-{const la=history.slice().reverse().find(x=>x.role==='assistant');if(la)lastPip=la.content}
+renderLog();renderChats();
 /* rounded-square favicon from favicon.jpeg (falls back to the built-in icon) */
 {const l=document.querySelector('link[rel=icon]'),im=new Image();im.onload=()=>{try{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');x.beginPath();x.roundRect(0,0,128,128,28);x.clip();const s=Math.min(im.naturalWidth,im.naturalHeight);x.drawImage(im,(im.naturalWidth-s)/2,(im.naturalHeight-s)/2,s,s,0,0,128,128);l.type='image/png';l.href=c.toDataURL('image/png')}catch(e){}};im.src='favicon.jpeg'}
 ui();
