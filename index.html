@@ -31,6 +31,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;pa
 .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px;letter-spacing:-.01em}
 .brand svg{width:26px;height:26px;color:var(--accent)}
 .brand small{font-weight:400;color:var(--muted);font-size:14px;margin-left:6px}
+.brand small .by b{font-weight:600;color:var(--ink)}
 .pill{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--line);border-radius:999px;font-size:13px;color:var(--muted)}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .pill.on{color:var(--ok);border-color:currentColor}.pill.on .dot{background:var(--ok)}
@@ -215,7 +216,7 @@ video#video{display:none}
   <div class="brand">
     <button class="btn" id="chatsToggle" type="button" style="padding:6px 8px" aria-label="Show or hide chats" title="Chats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:18px;height:18px;color:currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10.5" r="2.5"/></svg>
-    Glance<small>Answers from your screen and your files</small>
+    Glance<small>Answers from your screen and your files<span class="by"> · Made by <b>Youssef Hassan</b></span></small>
   </div>
   <span class="pill" id="status"><span class="dot"></span><span id="statusText">Screen not shared</span></span>
 </header>
@@ -273,7 +274,7 @@ video#video{display:none}
       <div class="row"><button class="btn" id="notifBtn">Allow notifications</button><button class="btn" id="testBtn">Send test</button></div>
       <p id="notifHelp" style="margin:10px 0 0"></p>
     </section>
-<h2>Made by Youssef Hassan</h2>
+
   </aside>
 </main>
 
