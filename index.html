@@ -92,6 +92,19 @@ kbd{font:500 12.5px "IBM Plex Sans",monospace;padding:2px 7px;border:1px solid v
 .fcard .code{border:0;border-top:1px solid var(--line);border-radius:0}
 .msg .txt+.fcard,.msg .fcard+.txt,.msg .fcard+.fcard,.msg .code+.fcard,.msg .fcard+.code{margin-top:10px}
 .frow{cursor:pointer}.fcard:hover{border-color:var(--muted)}
+.lcard,.icard{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);width:100%}
+.msg .lcard,.msg .icard{margin-top:10px}.msg .lcard:first-child,.msg .icard:first-child{margin-top:0}
+.msg.ai:has(.lcard,.icard){width:min(680px,92%)}
+.lcard-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 8px 6px 12px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12.5px;font-weight:500}
+.lcard-head .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lcard-head .a{display:flex;gap:6px;flex-shrink:0}
+.lcard-head .btn{padding:3px 10px;font-size:12.5px}
+.lcard iframe{width:100%;height:360px;border:0;background:#fff;display:block}
+.lcard pre.src{margin:0;padding:12px;overflow:auto;max-height:340px;background:#101821;color:#e6edf3;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre;border-top:1px solid var(--line)}
+.ibody{padding:12px;text-align:center;color:var(--muted);background:var(--bg);min-height:90px;display:grid;place-items:center}
+.ibody img{max-width:100%;display:block;margin:0 auto;border-radius:8px}
+.ibody.err{color:var(--warn)}
+.icap{padding:8px 12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 #viewer{position:fixed;top:0;right:0;bottom:0;width:min(580px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:15;display:flex;flex-direction:column;box-shadow:-8px 0 24px rgba(0,0,0,.18)}
 #viewer.wide{width:100%}
 .vwhead{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
@@ -440,7 +453,8 @@ function renderSettings(){
   $('#modeNote').textContent=k?'Requests go straight from your browser to the provider.':'Free through Puter.js. A Puter sign-in popup appears on first use.';
   $('#provider').value=S.provider;$('#base').value=S.base;$('#apikey').value=S.key;$('#remember').checked=S.remember;$('#model').value=model();
 }
-const FMT=' Formatting: whenever you output code, a terminal command, or the contents of a file, put it in its own fenced code block with a language tag (```bash, ```python, ```html) and keep explanations outside the block. When asked to create a file, output the complete file in one fenced block and put the filename after the language, like ```html index.html. Use one block per file. For documents, reports or PDFs write markdown (# headings, - bullets, **bold**) in one block named like report.pdf or report.docx (```markdown report.pdf); for spreadsheets write CSV or a markdown table in a block named like data.xlsx (```csv data.xlsx). Glance turns these into real downloadable PDF, Word and Excel files. Everything else (html, py, txt, csv, json, svg) uses its own extension.';
+const GFX=' Visuals: you can show graphs, charts, diagrams, interactive tools, games, animations and images right inside the chat. For a graph, chart, calculator, simulation, game, animation or any interactive page, output ONE complete self-contained HTML document in a fenced block whose language is live (```live). Use a white background and dark text, make it responsive, and load libraries only from https://cdnjs.cloudflare.com (for example Chart.js 4.4.1: https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js, or D3 7.8.5: https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js). Put charts in a div with a fixed height such as 360px and set maintainAspectRatio to false. Use real data from the conversation and never invent numbers. For flowcharts, sequence diagrams, mind maps, timelines, ER or class diagrams use a ```mermaid block containing only Mermaid syntax. For simple illustrations or icons use an unnamed ```svg block. To create a picture, photo, painting or any generated image, output a ```image block containing only a detailed English description of the image. Never say you cannot make images, charts or diagrams. Keep the text outside these blocks short. Use ```html blocks only when the user wants an html file to download.';
+const FMT=' Formatting: whenever you output code, a terminal command, or the contents of a file, put it in its own fenced code block with a language tag (```bash, ```python, ```html) and keep explanations outside the block. When asked to create a file, output the complete file in one fenced block and put the filename after the language, like ```html index.html. Use one block per file. For documents, reports or PDFs write markdown (# headings, - bullets, **bold**) in one block named like report.pdf or report.docx (```markdown report.pdf); for spreadsheets write CSV or a markdown table in a block named like data.xlsx (```csv data.xlsx). Glance turns these into real downloadable PDF, Word and Excel files. Everything else (html, py, txt, csv, json, svg) uses its own extension.'+GFX;
 const SYS='You are Glance, an expert assistant that sees the user’s screen. First work out what the user needs from what is on screen, then do it directly. '+
 'Multiple choice: state the correct option (letter and text), then one short reason. '+
 'Open question (history, science, trivia): answer accurately in a few sentences. '+
@@ -623,6 +637,89 @@ function fileCard(info,code){
   row.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target===row){e.preventDefault();openViewer(name,code,ext)}};
   row.append(ic,meta,act);w.appendChild(row);return w;
 }
+/* ---------- inline graphs, diagrams, interactive pages, images ---------- */
+let gidN=0;
+const LKIND={live:'Interactive',mermaid:'Diagram',svg:'Graphic'};
+function liveDoc(kind,code,id){
+  const ms=id?'<script>(function(){var l=0;function s(){var h=Math.ceil(document.body.scrollHeight);if(Math.abs(h-l)>3){l=h;parent.postMessage({glance:"h",id:"'+id+'",h:h},"*")}}addEventListener("load",s);try{new ResizeObserver(s).observe(document.body)}catch(e){}setTimeout(s,300);setTimeout(s,1500)})()<\/script>':'';
+  const base='<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;padding:12px;background:#fff;color:#17212b;font:14px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}</style></head><body>';
+  if(kind==='mermaid'){
+    return base+'<div id="o" style="text-align:center"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"><\/script><script>var SRC='+JSON.stringify(code).replace(/</g,'\\u003c')+';var o=document.getElementById("o");function fail(m){o.style.textAlign="left";o.style.whiteSpace="pre-wrap";o.style.font="13px monospace";o.style.color="#b3261e";o.textContent="Could not draw the diagram: "+m+"\\n\\n"+SRC}try{mermaid.initialize({startOnLoad:false,theme:"default",securityLevel:"strict"});mermaid.render("gd",SRC).then(function(r){o.innerHTML=r.svg}).catch(function(e){fail(e&&e.message||e)})}catch(e){fail(e.message)}<\/script>'+ms+'</body></html>';
+  }
+  if(kind==='svg')return base+'<style>svg{max-width:100%;height:auto}</style><div style="text-align:center">'+code+'</div>'+ms+'</body></html>';
+  let c=code;
+  if(/<html[\s>]/i.test(c)){
+    if(!/^\s*<!doctype/i.test(c))c='<!doctype html>'+c;
+    if(!ms)return c;
+    return /<\/body>/i.test(c)?c.replace(/<\/body>/i,()=>ms+'</body>'):c+ms;
+  }
+  return base+c+ms+'</body></html>';
+}
+window.addEventListener('message',e=>{
+  const d=e.data;if(!d||d.glance!=='h'||typeof d.h!=='number')return;
+  const f=document.querySelector('iframe[data-gid="'+String(d.id).replace(/[^\w]/g,'')+'"]');
+  if(f&&e.source===f.contentWindow)f.style.height=Math.max(120,Math.min(720,d.h))+'px';
+});
+function liveCard(kind,code,name){
+  const id='g'+(++gidN)+Math.random().toString(36).slice(2,6),title=name||LKIND[kind]||'Interactive';
+  let fname=name||(kind==='svg'?'graphic.svg':kind==='mermaid'?'diagram.html':'interactive.html');
+  if(kind!=='svg'&&!/\.html?$/i.test(fname))fname=fname.replace(/\.[^.\/]+$/,'')+'.html';
+  const w=document.createElement('div');w.className='lcard';
+  const h=document.createElement('div');h.className='lcard-head';
+  const t=document.createElement('span');t.className='t';t.textContent=title;
+  const a=document.createElement('span');a.className='a';
+  const f=document.createElement('iframe');f.setAttribute('sandbox','allow-scripts allow-forms allow-modals');f.dataset.gid=id;f.title=title;f.srcdoc=liveDoc(kind,code,id);
+  let src=null;
+  a.appendChild(mkBtn('Code',b=>{if(src){src.remove();src=null;b.textContent='Code'}else{src=document.createElement('pre');src.className='src';src.textContent=code;w.appendChild(src);b.textContent='Hide code'}}));
+  a.appendChild(mkBtn('Expand',()=>openViewer(kind==='svg'?'graphic.html':fname,liveDoc(kind,code,''),'html')));
+  a.appendChild(mkBtn('Download',()=>{saveBlob(kind==='svg'?new Blob([code],{type:'image/svg+xml'}):new Blob([liveDoc(kind,code,'')],{type:'text/html;charset=utf-8'}),fname)}));
+  a.appendChild(mkBtn('Copy',b=>copyText(code,b)));
+  h.append(t,a);w.append(h,f);return w;
+}
+const imgCache=new Map();
+async function genImage(prompt){
+  if(S.mode==='key'&&(S.provider==='openai'||S.provider==='custom')){
+    const base=baseUrl();if(!base)throw new Error('Enter a base URL in Settings');
+    if(!S.key&&S.provider==='openai')throw new Error('Add your API key in Settings');
+    const h={'content-type':'application/json'};if(S.key)h.authorization='Bearer '+S.key;
+    let err='';
+    for(const m of ['gpt-image-1','dall-e-3']){
+      const body={model:m,prompt,n:1,size:'1024x1024'};if(m==='dall-e-3')body.response_format='b64_json';
+      const r=await fetch(base+'/images/generations',{method:'POST',headers:h,body:JSON.stringify(body)});
+      const j=await r.json().catch(()=>({}));
+      if(r.ok&&j.data&&j.data[0]){const d=j.data[0];return d.b64_json?'data:image/png;base64,'+d.b64_json:d.url}
+      const er=j.error;err=er&&(er.message||(typeof er==='string'?er:''))||'HTTP '+r.status;
+    }
+    throw new Error(err);
+  }
+  if(typeof puter==='undefined'||!puter.ai||!puter.ai.txt2img)throw new Error('Image generation needs Puter (free) mode or an OpenAI key');
+  const im=await puter.ai.txt2img(prompt);
+  const src=im&&im.src;if(!src)throw new Error('No image was returned');
+  return src;
+}
+function imageCard(prompt,auto){
+  const w=document.createElement('div');w.className='icard';
+  const h=document.createElement('div');h.className='lcard-head';
+  const t=document.createElement('span');t.className='t';t.textContent='Image';
+  const a=document.createElement('span');a.className='a';
+  const body=document.createElement('div');body.className='ibody';
+  const cap=document.createElement('div');cap.className='icap';cap.textContent=prompt;cap.title=prompt;
+  let cur='';
+  const dl=mkBtn('Download',async()=>{try{saveBlob(await (await fetch(cur)).blob(),'glance-image.png')}catch(x){window.open(cur,'_blank')}});dl.hidden=true;
+  const rg=mkBtn('Generate',()=>run());
+  a.append(dl,rg);h.append(t,a);w.append(h,body,cap);
+  const show=src=>{cur=src;body.className='ibody';body.textContent='';const i=new Image();i.src=src;i.alt=prompt;body.appendChild(i);dl.hidden=false;rg.textContent='Regenerate'};
+  async function run(){
+    body.className='ibody';body.textContent='Generating image…';rg.disabled=true;dl.hidden=true;
+    try{const src=await genImage(prompt);imgCache.set(prompt,src);show(src)}
+    catch(x){body.className='ibody err';body.textContent='Could not generate the image: '+(x&&x.message||'unknown error');rg.textContent='Try again'}
+    rg.disabled=false;
+  }
+  if(imgCache.has(prompt))show(imgCache.get(prompt));
+  else if(auto)run();
+  else body.textContent='Image not generated yet. Press Generate.';
+  return w;
+}
 /* ---------- file viewer side panel ---------- */
 let vw={url:'',tok:0,name:'',code:'',ext:'',mode:'preview'};
 const PV=['html','svg','pdf','docx','xlsx','csv','md','json'];
@@ -710,12 +807,12 @@ function textBlock(s){
   });
   return d;
 }
-function renderRich(el,text){
+function renderRich(el,text,auto){
   el.textContent='';
   const re=/```([^\n]*)\n([\s\S]*?)(```|$)/g;let last=0,m,t;const files=[];
   while((m=re.exec(text))){
     if(m.index>last&&(t=textBlock(text.slice(last,m.index))))el.appendChild(t);
-    {const c=m[2].replace(/\n$/,''),pi=parseInfo(m[1]),big=!pi.name&&EXT[pi.lang]&&!['console','text','txt'].includes(pi.lang)&&c.split('\n').length>=12;el.appendChild(pi.name||big?fileCard(big?pi.lang+' file.'+EXT[pi.lang]:m[1],c):codeBlock(m[1],c));if(pi.name&&m[3]==='```')files.push({name:pi.name,code:c})}
+    {const c=m[2].replace(/\n$/,''),pi=parseInfo(m[1]),done=m[3]==='```',lv=done&&(pi.lang==='live'||(pi.lang==='mermaid'&&!pi.name)||(pi.lang==='svg'&&!pi.name)),big=!pi.name&&EXT[pi.lang]&&!['console','text','txt'].includes(pi.lang)&&c.split('\n').length>=12;el.appendChild(done&&pi.lang==='image'&&!pi.name?imageCard(c.trim(),auto):lv?liveCard(pi.lang,c,pi.name):pi.name||big?fileCard(big?pi.lang+' file.'+EXT[pi.lang]:m[1],c):codeBlock(m[1],c));if(pi.name&&!lv&&pi.lang!=='image'&&m[3]==='```')files.push({name:pi.name,code:c})}
     last=re.lastIndex;if(m[0].length===0)re.lastIndex++;
   }
   if(last<text.length&&(t=textBlock(text.slice(last))))el.appendChild(t);
@@ -824,7 +921,7 @@ function textOf(r){
   if(Array.isArray(c))return c.map(p=>p.text||'').join('');
   return String(r);
 }
-function setMsg(el,text,err){if(err){el.textContent=text}else renderRich(el,text);el.classList.toggle('err',!!err);log.scrollTop=log.scrollHeight}
+function setMsg(el,text,err){if(err){el.textContent=text}else renderRich(el,text,true);el.classList.toggle('err',!!err);log.scrollTop=log.scrollHeight}
 function beep(){try{beepCtx=beepCtx||new (window.AudioContext||window.webkitAudioContext)();beepCtx.resume();const o=beepCtx.createOscillator(),g=beepCtx.createGain(),n=beepCtx.currentTime;o.connect(g);g.connect(beepCtx.destination);o.frequency.value=880;g.gain.setValueAtTime(.12,n);g.gain.exponentialRampToValueAtTime(.001,n+.25);o.start();o.stop(n+.25)}catch(e){}}
 function pipShow(t){lastPip=t;if(pip&&!pip.closed){const a=pip.document.getElementById('ans');if(a)a.textContent=t}}
 function notifHelp(){
